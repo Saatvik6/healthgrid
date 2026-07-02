@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface-0: #0a0e13;
+  --surface-1: #10161d;
+  --surface-2: #182029;
+  --line: #243040;
+  --ink-1: #e8edf2;
+  --ink-2: #9fb0bf;
+  --ink-3: #5f7183;
+  --accent: #4fa3a5;
+  --status-healthy: #2fa36b;
+  --status-at-risk: #d9a03c;
+  --status-critical: #d9524a;
+  --status-healthy-dim: rgba(47, 163, 107, 0.18);
+  --status-at-risk-dim: rgba(217, 160, 60, 0.18);
+  --status-critical-dim: rgba(217, 82, 74, 0.18);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-healthy: var(--status-healthy);
+  --color-at-risk: var(--status-at-risk);
+  --color-critical: var(--status-critical);
+  --color-healthy-dim: var(--status-healthy-dim);
+  --color-at-risk-dim: var(--status-at-risk-dim);
+  --color-critical-dim: var(--status-critical-dim);
+  --font-sans: var(--font-plex-sans), var(--font-plex-devanagari), sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-0);
+  color: var(--ink-1);
+  font-family: var(--font-plex-sans), var(--font-plex-devanagari), sans-serif;
+  font-size: 13px;
+}
+
+/* Every metric: aligned digits that don't jitter on live updates. */
+.num {
+  font-family: var(--font-plex-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section/rail headers per DESIGN.md. */
+.rail-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Single pulse on status change; never infinite. */
+@keyframes status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 0.9;
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+    opacity: 1;
+  }
+}
+.pulse-once {
+  animation: status-pulse 1.2s ease-out 1;
 }
