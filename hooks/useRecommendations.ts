@@ -30,11 +30,16 @@ export function useRecommendations(): TransferRecommendation[] {
     (async () => {
       if (!HAS_FIREBASE) return;
       const { clientDb } = await import("@/lib/firebase/client");
-      const { collection, onSnapshot, orderBy, query, where } = await import("firebase/firestore");
+      const { collection, onSnapshot, query, where } = await import("firebase/firestore");
       if (cancelled) return;
-      unsub = onSnapshot(
-        query(collection(clientDb, "recommendations"), where("status", "==", "pending"), orderBy("createdAt", "desc")),
-        (snap) => setRecs(snap.docs.map((d) => ({ ...(d.data() as Omit<TransferRecommendation, "id">), id: d.id }))),
+      // No orderBy: where+orderBy needs a composite index; sorting a handful
+      // of pending recommendations client-side avoids that dependency.
+      unsub = onSnapshot(query(collection(clientDb, "recommendations"), where("status", "==", "pending")), (snap) =>
+        setRecs(
+          snap.docs
+            .map((d) => ({ ...(d.data() as Omit<TransferRecommendation, "id">), id: d.id }))
+            .sort((a, b) => b.createdAt - a.createdAt),
+        ),
       );
     })();
 

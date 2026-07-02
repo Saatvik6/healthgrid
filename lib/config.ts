@@ -5,3 +5,6 @@ export function env(name: string): string {
 }
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+// When the primary model's quota is exhausted mid-demo, degrade to a model
+// with a separate (larger) free-tier bucket instead of failing.
+export const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL ?? "gemini-2.0-flash";

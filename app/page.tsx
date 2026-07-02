@@ -21,9 +21,9 @@ export default function CommandCenter() {
       <PulseHeader facilities={facilities} pendingRecommendations={recommendations.length} />
 
       <main className="flex-1 min-h-0 flex gap-2 p-2">
-        <section className="flex-1 min-w-0">
+        <section className="flex-1 min-w-0 flex flex-col">
           {loading ? (
-            <div className="h-full rounded border border-line bg-surface-1 p-4">
+            <div className="flex-1 rounded border border-line bg-surface-1 p-4">
               <div className="rail-label">Loading district…</div>
             </div>
           ) : (

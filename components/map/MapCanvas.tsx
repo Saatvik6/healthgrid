@@ -150,7 +150,7 @@ export default function MapCanvas({ facilities, selectedId, onSelect }: Props) {
 
   if (state === "no-key" || state === "error") {
     return (
-      <div className="h-full overflow-y-auto bg-surface-1 border border-line rounded p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-surface-1 border border-line rounded p-3">
         <div className="rail-label mb-2">
           {state === "no-key" ? "Facilities (map pending Maps API key)" : "Facilities (map failed to load)"}
         </div>
@@ -177,5 +177,5 @@ export default function MapCanvas({ facilities, selectedId, onSelect }: Props) {
     );
   }
 
-  return <div ref={mapDiv} className="h-full rounded border border-line" />;
+  return <div ref={mapDiv} className="flex-1 min-h-0 rounded border border-line" />;
 }
