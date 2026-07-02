@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import FacilityPanel from "@/components/facility/FacilityPanel";
 import InsightsRail from "@/components/insights/InsightsRail";
+import Recommendations from "@/components/insights/Recommendations";
 import MapCanvas from "@/components/map/MapCanvas";
 import PulseHeader from "@/components/PulseHeader";
 import { useFacilities } from "@/hooks/useFacilities";
@@ -31,6 +32,7 @@ export default function CommandCenter() {
         </section>
 
         <aside className="w-[380px] shrink-0 flex flex-col gap-2 min-h-0 overflow-y-auto">
+          <Recommendations facilities={facilities} persistedRecs={recommendations} onSelect={setSelectedId} />
           {selected ? (
             <FacilityPanel facility={selected} />
           ) : (
