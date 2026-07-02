@@ -4,6 +4,7 @@ import type { Facility, FacilityStatus } from "@/lib/engine/types";
 import { computeRisk } from "@/lib/engine/risk";
 import { facilityForecast } from "@/lib/engine/forecast";
 import { useHistory } from "@/hooks/useHistory";
+import ScoreRing from "@/components/facility/ScoreRing";
 import Sparkline from "@/components/Sparkline";
 
 const STATUS_LABEL: Record<FacilityStatus, string> = {
@@ -41,11 +42,9 @@ export default function FacilityPanel({ facility }: { facility: Facility }) {
             {STATUS_LABEL[facility.status]}
           </div>
         </div>
-        <div className="text-right">
-          <div className="num text-[26px] leading-none font-semibold" style={{ color }}>
-            {facility.healthScore}
-          </div>
-          <div className="rail-label mt-1">Health score</div>
+        <div className="flex flex-col items-center">
+          <ScoreRing score={facility.healthScore} color={color} />
+          <div className="rail-label">Health score</div>
         </div>
       </div>
 
@@ -103,7 +102,7 @@ export default function FacilityPanel({ facility }: { facility: Facility }) {
               const item = facility.inventory[fc.medicineId];
               const usage = history.map((d) => d.consumption[fc.medicineId] ?? 0);
               return (
-                <tr key={fc.medicineId} className="border-t border-line h-9">
+                <tr key={fc.medicineId} className="border-t border-line h-9 hover:bg-surface-2/60 transition-colors">
                   <td className="text-ink-1 pr-2">{fc.name}</td>
                   <td className="num text-ink-2 text-right">
                     {item.currentStock.toLocaleString("en-IN")} <span className="text-ink-3">{item.unit}</span>

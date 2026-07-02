@@ -58,6 +58,56 @@ body {
   color: var(--ink-3);
 }
 
+/* Quiet, deliberate details. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+button,
+a,
+select,
+input {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+h1,
+.wordmark {
+  letter-spacing: -0.02em;
+}
+
+/* Live connection indicator: slow, calm breathing — not an alarm. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.live-dot {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
 /* Single pulse on status change; never infinite. */
 @keyframes status-pulse {
   0% {

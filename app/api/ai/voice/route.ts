@@ -68,7 +68,8 @@ Rules: every number in your updates must literally appear in the speech; map spo
     const text = res.text;
     if (!text) throw new GeminiUnavailable("empty");
     return Response.json(JSON.parse(text));
-  } catch {
+  } catch (e) {
+    console.error("voice error:", e instanceof Error ? e.message : e);
     return Response.json({ error: "Could not understand the audio. Please try again." }, { status: 502 });
   }
 }

@@ -50,7 +50,13 @@ export default function VoiceUpdate({ facility }: { facility: Facility }) {
 
   async function processAudio() {
     const blob = new Blob(chunks.current, { type: "audio/webm" });
-    const audioBase64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
+    // Browser-safe base64 (Buffer doesn't exist in client bundles).
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    }
+    const audioBase64 = btoa(bin);
     try {
       const res = await fetch("/api/ai/voice", {
         method: "POST",

@@ -18,9 +18,19 @@ export default function PulseHeader({ facilities, pendingRecommendations, onOpen
 
   return (
     <header className="h-14 shrink-0 flex items-center gap-6 px-4 bg-surface-1 border-b border-line">
-      <div className="flex items-baseline gap-2">
-        <span className="text-[15px] font-semibold text-ink-1">HealthGrid AI</span>
-        <span className="text-ink-3 text-xs">Wardha District · Maharashtra</span>
+      <div className="flex items-center gap-3">
+        <div className="flex items-baseline gap-1">
+          <span className="wordmark text-[16px] font-semibold text-ink-1">HealthGrid</span>
+          <span className="wordmark text-[16px] font-semibold text-accent">AI</span>
+        </div>
+        <span className="w-px h-5 bg-line" />
+        <div className="flex flex-col leading-tight">
+          <span className="text-ink-2 text-xs">Wardha District · Maharashtra</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
+            <span className="live-dot inline-block w-1.5 h-1.5 rounded-full bg-[var(--status-healthy)]" />
+            LIVE · district command center
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 ml-auto">

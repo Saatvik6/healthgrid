@@ -71,8 +71,10 @@ function createFacilityLayer(onSelect: (id: string) => void): FacilityLayerLike 
 
       const label = el.querySelector<HTMLDivElement>(".hg-label")!;
       label.textContent = f.name;
-      label.style.display = showLabels || selected ? "block" : "none";
-      label.style.color = selected ? "var(--ink-1)" : "var(--ink-3)";
+      // Facilities in trouble always carry their name; the rest label on zoom.
+      label.style.display = showLabels || selected || f.status !== "healthy" ? "block" : "none";
+      label.style.color = selected ? "var(--ink-1)" : f.status === "critical" ? STATUS_VAR.critical : "var(--ink-3)";
+      label.style.textShadow = "0 1px 3px rgba(0,0,0,0.9)";
 
       const prev = this.lastStatus.get(f.id);
       if (prev && prev !== f.status) {
