@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Facility } from "./types";
-import { computeRisk } from "./risk";
+import { computeRisk, statusFor } from "./risk";
 import { item } from "./forecast.test";
 
 function baseFacility(overrides: Partial<Facility> = {}): Facility {
@@ -64,12 +64,19 @@ describe("computeRisk", () => {
         paracetamol: item({ medicineId: "paracetamol", currentStock: 65, avgDaily7d: 13, avgDaily30d: 13 }), // 5d -> warning
         ors: item({ medicineId: "ors", currentStock: 400, avgDaily7d: 8, avgDaily30d: 8 }),
       },
-      staff: { doctorsSanctioned: 2, doctorsPresentToday: 1, attendanceRate7d: 0.5 },
-      beds: { total: 10, occupied: 9 },
-      tests: { hemoglobin: true, bloodSugar: false, malaria: false, urine: true },
+      staff: { doctorsSanctioned: 2, doctorsPresentToday: 1, attendanceRate7d: 0.7 },
+      beds: { total: 10, occupied: 8 },
+      tests: { hemoglobin: true, bloodSugar: false, malaria: true, urine: true },
     });
     const r = computeRisk(f);
     expect(r.status).toBe("at_risk");
+  });
+
+  it("maps boundary totals: 80 healthy, 60 at_risk, 59 critical", () => {
+    expect(statusFor(80)).toBe("healthy");
+    expect(statusFor(79)).toBe("at_risk");
+    expect(statusFor(60)).toBe("at_risk");
+    expect(statusFor(59)).toBe("critical");
   });
 
   it("ignores non-essential medicines in the medicine component", () => {

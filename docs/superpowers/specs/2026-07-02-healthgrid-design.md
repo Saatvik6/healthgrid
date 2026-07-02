@@ -104,7 +104,7 @@ events/{id}   // audit trail, also feeds "live activity" ticker
 - Bed pressure 15%: occupancy > 85% penalized
 - Patient-load surge 10%: 7d trend vs baseline
 - Test availability 10%: share of core tests down
-Thresholds: ≥70 healthy, 40–69 at_risk, <40 critical. Recomputed server-side after every write (update APIs call `recompute(facilityId)`).
+Thresholds: ≥80 healthy, 60–79 at_risk, <60 critical. Medicine penalty per essential item: <3 days 1.0, <7 days 0.6, normalized so half the essential list in critical supply zeroes the component (calibrated during implementation so realistic collapse patterns actually reach `critical`). Recomputed server-side after every write (update APIs call `recompute(facilityId)`).
 
 ## 7. Gemini integration points (all structured)
 

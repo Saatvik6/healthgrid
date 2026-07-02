@@ -12,16 +12,17 @@ export interface ScoreBreakdown {
 }
 
 export function statusFor(total: number): FacilityStatus {
-  return total >= 70 ? "healthy" : total >= 40 ? "at_risk" : "critical";
+  return total >= 80 ? "healthy" : total >= 60 ? "at_risk" : "critical";
 }
 
 export function computeRisk(f: Facility): ScoreBreakdown {
   const meds = Object.values(f.inventory).filter((m) => m.essential);
   const penalty = meds.reduce((sum, m) => {
     const d = daysToStockout(m, f.patients.trend7dPct);
-    return sum + (d < 3 ? 1 : d < 7 ? 0.5 : 0);
+    return sum + (d < 3 ? 1 : d < 7 ? 0.6 : 0);
   }, 0);
-  const medicine = Math.round(40 * (1 - (meds.length ? penalty / meds.length : 0)));
+  // Half the essential list in critical supply zeroes this component.
+  const medicine = Math.round(40 * Math.max(0, 1 - (meds.length ? penalty / (0.5 * meds.length) : 0)));
 
   const staffing = Math.round(25 * Math.min(1, f.staff.attendanceRate7d));
 
