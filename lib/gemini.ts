@@ -10,22 +10,36 @@ export function genai(): GoogleGenAI {
 
 export class GeminiUnavailable extends Error {}
 
-function isQuotaError(e: unknown): boolean {
+function isTransient(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e);
-  return msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota");
+  return (
+    msg.includes("429") ||
+    msg.includes("RESOURCE_EXHAUSTED") ||
+    msg.includes("quota") ||
+    msg.includes("503") ||
+    msg.includes("UNAVAILABLE") ||
+    msg.includes("high demand") ||
+    msg.includes("overloaded")
+  );
 }
 
-/** generateContent on the primary model, falling back to the secondary
-    model's separate quota bucket when the primary is exhausted. */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** generateContent with resilience: primary model, then (on quota exhaustion
+    or overload) the fallback model's separate bucket, with one short backoff
+    retry per model. The demo must survive free-tier weather. */
 export async function generateWithFallback(
   params: Omit<GenerateContentParameters, "model">,
 ): Promise<GenerateContentResponse> {
-  try {
-    return await genai().models.generateContent({ model: GEMINI_MODEL, ...params });
-  } catch (e) {
-    if (!isQuotaError(e)) throw e;
-    return await genai().models.generateContent({ model: GEMINI_FALLBACK_MODEL, ...params });
+  for (const [i, model] of [GEMINI_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL].entries()) {
+    try {
+      return await genai().models.generateContent({ model, ...params });
+    } catch (e) {
+      if (!isTransient(e) || i === 2) throw e;
+      await sleep(1500 * (i + 1));
+    }
   }
+  throw new Error("unreachable");
 }
 
 /** One retry, hard timeout, JSON-schema-constrained output. Throws

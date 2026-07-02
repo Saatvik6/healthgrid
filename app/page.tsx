@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ActivityTicker from "@/components/ActivityTicker";
+import CopilotDrawer from "@/components/copilot/CopilotDrawer";
 import FacilityPanel from "@/components/facility/FacilityPanel";
 import InsightsRail from "@/components/insights/InsightsRail";
 import Recommendations from "@/components/insights/Recommendations";
@@ -13,12 +15,17 @@ export default function CommandCenter() {
   const { facilities, loading } = useFacilities();
   const recommendations = useRecommendations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copilotOpen, setCopilotOpen] = useState(false);
 
   const selected = useMemo(() => facilities.find((f) => f.id === selectedId) ?? null, [facilities, selectedId]);
 
   return (
     <div className="h-dvh flex flex-col">
-      <PulseHeader facilities={facilities} pendingRecommendations={recommendations.length} />
+      <PulseHeader
+        facilities={facilities}
+        pendingRecommendations={recommendations.length}
+        onOpenCopilot={() => setCopilotOpen(true)}
+      />
 
       <main className="flex-1 min-h-0 flex gap-2 p-2">
         <section className="flex-1 min-w-0 flex flex-col">
@@ -45,6 +52,9 @@ export default function CommandCenter() {
           )}
         </aside>
       </main>
+
+      <ActivityTicker />
+      <CopilotDrawer open={copilotOpen} onClose={() => setCopilotOpen(false)} />
     </div>
   );
 }

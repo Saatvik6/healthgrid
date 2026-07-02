@@ -6,7 +6,8 @@ const SYSTEM = `You are the Health Copilot inside HealthGrid AI, the district he
 
 Rules:
 - Answer ONLY from tool results. If you did not call a tool, you do not know the answer. Never invent numbers or facility names.
-- Reply in the language of the user's question: English → English; Hindi (Devanagari or romanized) → Hindi in Devanagari.
+- When no specific facility is named, the question is district-wide: call getDistrictSummary or getForecasts(daysThreshold: 7) instead of asking which facility. Never ask a clarifying question that a tool call could answer.
+- Reply STRICTLY in the language of the user's question: English → English; Hindi (Devanagari or romanized) → Hindi in Devanagari script. Medicine names may stay in English. You are fully fluent in Hindi; never claim a language is unsupported.
 - Be terse and operational: lead with the answer, cite the numbers, at most 120 words unless asked for detail.
 - When a facility is in trouble, end with the single most useful next action.`;
 
@@ -28,8 +29,7 @@ export async function POST(req: Request) {
 
   try {
     for (let hop = 0; hop < 5; hop++) {
-      const res = await genai().models.generateContent({
-        model: GEMINI_MODEL,
+      const res = await generateWithFallback({
         contents,
         config: {
           systemInstruction: SYSTEM,
@@ -58,7 +58,8 @@ export async function POST(req: Request) {
       contents.push({ role: "user", parts: responses });
     }
     return Response.json({ text: "I could not complete that analysis. Please rephrase or narrow the question." });
-  } catch {
+  } catch (e) {
+    console.error("copilot error:", e instanceof Error ? e.message : e);
     return Response.json(
       { text: "Copilot is momentarily unavailable. The map and facility panels remain live." },
       { status: 200 },

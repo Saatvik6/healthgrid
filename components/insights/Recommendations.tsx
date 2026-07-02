@@ -26,6 +26,9 @@ export default function Recommendations({ facilities, persistedRecs, onSelect }:
 
   useEffect(() => {
     if (!worst) return;
+    // Pending recommendations already exist for this facility: don't burn
+    // quota regenerating what the DHO hasn't acted on yet.
+    if (persistedRecs.some((r) => r.toFacilityId === worst.id)) return;
     const key = `${worst.id}:${worst.lastUpdated}`;
     if (generatedFor.current === key) return;
     generatedFor.current = key;

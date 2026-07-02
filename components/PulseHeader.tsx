@@ -5,9 +5,10 @@ import type { Facility } from "@/lib/engine/types";
 interface Props {
   facilities: Facility[];
   pendingRecommendations: number;
+  onOpenCopilot: () => void;
 }
 
-export default function PulseHeader({ facilities, pendingRecommendations }: Props) {
+export default function PulseHeader({ facilities, pendingRecommendations, onOpenCopilot }: Props) {
   const counts = { healthy: 0, at_risk: 0, critical: 0 };
   let patientsToday = 0;
   for (const f of facilities) {
@@ -36,6 +37,13 @@ export default function PulseHeader({ facilities, pendingRecommendations }: Prop
           <span className="num text-ink-1 text-sm">{pendingRecommendations}</span>
           <span className="text-ink-3 text-xs">pending actions</span>
         </div>
+        <Divider />
+        <button
+          onClick={onOpenCopilot}
+          className="px-2.5 py-1.5 rounded text-xs font-medium bg-accent/15 text-accent border border-accent/40 hover:bg-accent/25"
+        >
+          Copilot
+        </button>
       </div>
     </header>
   );

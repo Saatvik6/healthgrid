@@ -33,8 +33,24 @@ const SCHEMA = {
 const SYSTEM = `You are the analysis engine of HealthGrid AI, a district health command center used by a District Health Officer in Maharashtra, India.
 Explain WHY a facility is in its current state, grounded ONLY in the data provided. Every claim must cite a number that appears in the data. Never invent numbers. Be terse and factual; no pleasantries.`;
 
-// In-memory cache: one insight set per facility per lastUpdated stamp.
+// Two-level cache keyed by the facility's lastUpdated stamp: module memory,
+// then Firestore (survives restarts/instances — reloads cost zero quota).
 const cache = new Map<string, { at: number; insights: Insights }>();
+const HAS_ADMIN = !!process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+
+async function readPersistedCache(facilityId: string, at: number): Promise<Insights | null> {
+  if (!HAS_ADMIN) return null;
+  const { adminDb } = await import("@/lib/firebase/admin");
+  const snap = await adminDb().collection("insightsCache").doc(facilityId).get();
+  const data = snap.data();
+  return data && data.at === at ? (data.insights as Insights) : null;
+}
+
+async function persistCache(facilityId: string, at: number, insights: Insights) {
+  if (!HAS_ADMIN) return;
+  const { adminDb } = await import("@/lib/firebase/admin");
+  await adminDb().collection("insightsCache").doc(facilityId).set({ at, insights });
+}
 
 export async function POST(req: Request) {
   const { facilityId } = await req.json();
@@ -46,6 +62,11 @@ export async function POST(req: Request) {
   const hit = cache.get(facilityId);
   if (hit && hit.at === facility.lastUpdated) {
     return Response.json({ ...hit.insights, cached: true });
+  }
+  const persisted = await readPersistedCache(facilityId, facility.lastUpdated);
+  if (persisted) {
+    cache.set(facilityId, { at: facility.lastUpdated, insights: persisted });
+    return Response.json({ ...persisted, cached: true });
   }
 
   const [history, all] = await Promise.all([getHistoryDays(facilityId, 14), getAllFacilities()]);
@@ -73,6 +94,7 @@ export async function POST(req: Request) {
   try {
     const insights = await generateStructured<Insights>({ prompt, schema: SCHEMA, system: SYSTEM });
     cache.set(facilityId, { at: facility.lastUpdated, insights });
+    await persistCache(facilityId, facility.lastUpdated, insights);
     return Response.json({ ...insights, cached: false });
   } catch (e) {
     if (e instanceof GeminiUnavailable) {
