@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import FacilityPanel from "@/components/facility/FacilityPanel";
+import InsightsRail from "@/components/insights/InsightsRail";
 import MapCanvas from "@/components/map/MapCanvas";
 import PulseHeader from "@/components/PulseHeader";
 import { useFacilities } from "@/hooks/useFacilities";
@@ -30,14 +31,15 @@ export default function CommandCenter() {
         </section>
 
         <aside className="w-[380px] shrink-0 flex flex-col gap-2 min-h-0 overflow-y-auto">
-          {/* InsightsRail (Task 8) mounts here. */}
           {selected ? (
             <FacilityPanel facility={selected} />
           ) : (
-            <div className="rounded border border-line bg-surface-1 p-3">
-              <div className="rail-label mb-2">Facility</div>
-              <div className="text-ink-3 text-xs">Select a facility on the map.</div>
-            </div>
+            <InsightsRail facilities={facilities} onSelect={setSelectedId} />
+          )}
+          {selected && (
+            <button onClick={() => setSelectedId(null)} className="text-ink-3 text-xs text-left px-1 hover:text-ink-2">
+              ← Back to district analysis
+            </button>
           )}
         </aside>
       </main>
