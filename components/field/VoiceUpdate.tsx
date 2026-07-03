@@ -105,7 +105,7 @@ export default function VoiceUpdate({ facility }: { facility: Facility }) {
   return (
     <div className="rounded border border-line bg-surface-1 p-3">
       <div className="rail-label mb-1">Voice update · आवाज़ से अपडेट</div>
-      <p className="text-ink-3 text-xs mb-3">Hold the button and speak — e.g. “आज ओआरएस का स्टॉक 50 बचा है”</p>
+      <p className="text-ink-3 text-xs mb-3">Hold the button and speak in Hindi, English or Marathi — e.g. “आज ओआरएस का स्टॉक 50 बचा है”</p>
 
       {(phase === "idle" || phase === "recording") && (
         <button
