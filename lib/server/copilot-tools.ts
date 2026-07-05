@@ -4,6 +4,7 @@
 import { Type, type FunctionDeclaration } from "@google/genai";
 import { daysToStockout, facilityForecast } from "../engine/forecast";
 import { computeRisk } from "../engine/risk";
+import { demandForecast } from "../engine/demand";
 import { getAllFacilities, getFacility } from "./data";
 
 export const declarations: FunctionDeclaration[] = [
@@ -33,6 +34,14 @@ export const declarations: FunctionDeclaration[] = [
     },
   },
   {
+    name: "getPatientDemandForecast",
+    description: "Grounded patient demand forecasts. With facilityId returns one facility; without it ranks all facilities by tomorrow's load and demand pressure. Use for demand, OPD, patient load, staffing or capacity questions.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: { facilityId: { type: Type.STRING, description: "Optional facility id. Omit for district-wide ranking." } },
+    },
+  },
+  {
     name: "listFacilities",
     description: "All facility ids, names, statuses and health scores.",
   },
@@ -41,6 +50,13 @@ export const declarations: FunctionDeclaration[] = [
 type Executor = (args: Record<string, unknown>) => Promise<unknown>;
 
 export const executors: Record<string, Executor> = {
+  async getPatientDemandForecast(args) {
+    const facilityId = typeof args.facilityId === "string" ? args.facilityId : "";
+    const all = facilityId ? [await getFacility(facilityId)].filter((f) => f !== null) : await getAllFacilities();
+    if (all.length === 0) return { error: `No facility with id '${facilityId}'. Call listFacilities for valid ids.` };
+    return all.map((f) => ({ facilityName: f.name, ...demandForecast(f) })).sort((a, b) => b.predictedTomorrow - a.predictedTomorrow);
+  },
+
   async listFacilities() {
     const all = await getAllFacilities();
     return all
@@ -88,6 +104,7 @@ export const executors: Record<string, Executor> = {
       healthScore: f.healthScore,
       scoreBreakdown: computeRisk(f),
       patients: f.patients,
+      patientDemandForecast: demandForecast(f),
       staff: f.staff,
       beds: f.beds,
       testsUnavailable: Object.entries(f.tests).filter(([, v]) => !v).map(([k]) => k),

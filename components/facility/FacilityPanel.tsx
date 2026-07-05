@@ -3,6 +3,7 @@
 import type { Facility, FacilityStatus } from "@/lib/engine/types";
 import { computeRisk } from "@/lib/engine/risk";
 import { facilityForecast } from "@/lib/engine/forecast";
+import { demandForecast, type DemandPressure, type DemandTrend } from "@/lib/engine/demand";
 import { useHistory } from "@/hooks/useHistory";
 import ScoreRing from "@/components/facility/ScoreRing";
 import Sparkline from "@/components/Sparkline";
@@ -22,6 +23,7 @@ export default function FacilityPanel({ facility }: { facility: Facility }) {
   const history = useHistory(facility.id, 30);
   const breakdown = computeRisk(facility);
   const forecasts = facilityForecast(facility);
+  const demand = demandForecast(facility);
   const color = STATUS_COLOR[facility.status];
   const occupancyPct = facility.beds.total ? Math.round((facility.beds.occupied / facility.beds.total) * 100) : 0;
 
@@ -85,6 +87,32 @@ export default function FacilityPanel({ facility }: { facility: Facility }) {
         <Metric label="Beds" value={`${facility.beds.occupied}/${facility.beds.total}`} sub={`${occupancyPct}% occupied`} subColor={occupancyPct > 85 ? "var(--status-at-risk)" : "var(--ink-3)"} />
       </div>
 
+      <div className="p-3 border-b border-line bg-surface-2/40">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="rail-label">Patient demand forecast</div>
+          <span className="num text-[10px] text-ink-3">{Math.round(demand.confidence * 100)}% confidence</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded border border-line bg-surface-1 p-2">
+            <div className="text-[10px] uppercase tracking-wide text-ink-3">Expected tomorrow</div>
+            <div className="num text-xl text-ink-1 mt-0.5">{demand.predictedTomorrow.toLocaleString("en-IN")}</div>
+            <div className="text-[10px] text-ink-3">patients</div>
+          </div>
+          <div className="rounded border border-line bg-surface-1 p-2">
+            <div className="text-[10px] uppercase tracking-wide text-ink-3">Expected next 7 days</div>
+            <div className="num text-xl text-ink-1 mt-0.5">{demand.predicted7DayTotal.toLocaleString("en-IN")}</div>
+            <div className="text-[10px] text-ink-3">patient visits</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2">
+          <DemandBadge label={demand.trend} kind={demand.trend} />
+          <DemandBadge label={`${demand.pressure} pressure`} kind={demand.pressure} />
+        </div>
+        <ul className="mt-2 space-y-1">
+          {demand.reasons.map((reason) => <li key={reason} className="text-[11px] leading-relaxed text-ink-2">• {reason}</li>)}
+        </ul>
+      </div>
+
       {/* Inventory */}
       <div className="p-3 border-b border-line">
         <div className="rail-label mb-2">Medicine inventory</div>
@@ -142,6 +170,11 @@ export default function FacilityPanel({ facility }: { facility: Facility }) {
       </div>
     </div>
   );
+}
+
+function DemandBadge({ label, kind }: { label: string; kind: DemandPressure | DemandTrend }) {
+  const color = kind === "critical" || kind === "rising" ? "var(--status-critical)" : kind === "high" || kind === "moderate" ? "var(--status-at-risk)" : kind === "falling" ? "var(--status-healthy)" : "var(--ink-2)";
+  return <span className="capitalize px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ color, background: `color-mix(in srgb, ${color} 14%, transparent)` }}>{label}</span>;
 }
 
 function Metric({ label, value, sub, subColor = "var(--ink-3)" }: { label: string; value: string; sub: string; subColor?: string }) {
