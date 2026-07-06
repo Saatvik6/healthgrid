@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Facility } from "@/lib/engine/types";
 
 interface Props {
@@ -54,9 +55,9 @@ export default function PulseHeader({ facilities, pendingRecommendations, onOpen
         >
           Copilot
         </button>
-        <a href="/field" className="text-ink-3 text-xs hover:text-ink-2">
+        <Link href="/field" className="text-ink-3 text-xs hover:text-ink-2">
           Field view →
-        </a>
+        </Link>
       </div>
     </header>
   );

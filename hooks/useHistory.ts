@@ -9,13 +9,13 @@ export function useHistory(facilityId: string | null, days = 30): HistoryDay[] {
   const [history, setHistory] = useState<HistoryDay[]>([]);
 
   useEffect(() => {
-    if (!facilityId) {
-      setHistory([]);
-      return;
-    }
     let cancelled = false;
 
     (async () => {
+      if (!facilityId) {
+        setHistory([]);
+        return;
+      }
       if (HAS_FIREBASE) {
         const { clientDb } = await import("@/lib/firebase/client");
         const { collection, getDocs, limitToLast, orderBy, query } = await import("firebase/firestore");

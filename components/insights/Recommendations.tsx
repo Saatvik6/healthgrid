@@ -43,7 +43,7 @@ export default function Recommendations({ facilities, persistedRecs, onSelect }:
         // Persisted ones arrive via the realtime hook; nothing to do here.
       })
       .catch(() => {});
-  }, [worst]);
+  }, [worst, persistedRecs]);
 
   const recs = (persistedRecs.length > 0 ? persistedRecs : localRecs).filter((r) => !hidden.has(r.id));
   if (recs.length === 0) return null;

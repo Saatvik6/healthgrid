@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import VoiceUpdate from "@/components/field/VoiceUpdate";
 import { useFacilities } from "@/hooks/useFacilities";
@@ -38,9 +39,9 @@ export default function FieldPage() {
           <div className="text-ink-1 text-[15px] font-semibold">HealthGrid Field</div>
           <div className="text-ink-3 text-xs">
             फ्रंटलाइन अपडेट · {facility.block} block ·{" "}
-            <a href="/" className="hover:text-ink-2 underline decoration-line">
+            <Link href="/" className="hover:text-ink-2 underline decoration-line">
               command center
-            </a>
+            </Link>
           </div>
         </div>
         <select

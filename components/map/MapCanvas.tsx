@@ -108,14 +108,13 @@ export default function MapCanvas({ facilities, selectedId, onSelect }: Props) {
   const mapDiv = useRef<HTMLDivElement>(null);
   const layer = useRef<FacilityLayerLike | null>(null);
   const [showLabels, setShowLabels] = useState(false);
-  const [state, setState] = useState<"loading" | "ready" | "no-key" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "no-key" | "error">(() =>
+    process.env.NEXT_PUBLIC_MAPS_API_KEY ? "loading" : "no-key",
+  );
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_MAPS_API_KEY;
-    if (!key) {
-      setState("no-key");
-      return;
-    }
+    if (!key) return;
     let cancelled = false;
     (async () => {
       try {

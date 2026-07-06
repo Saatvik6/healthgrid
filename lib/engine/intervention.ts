@@ -36,7 +36,8 @@ export function interventionQueue(facilities: Facility[]): InterventionItem[] {
       let primaryReason = demand.reasons[0];
       let recommendedAction = "Monitor demand and facility capacity";
       if (urgentStock) {
-        primaryReason = `${urgentStock.name} may stock out in ${Math.max(0, Math.floor(urgentStock.daysLeft))} days${demand.pressure === "high" || demand.pressure === "critical" ? ` with ${demand.pressure} patient demand` : ""}.`;
+        const days = Math.max(0, Math.floor(urgentStock.daysLeft));
+        primaryReason = `${urgentStock.name} may stock out in ${days} ${days === 1 ? "day" : "days"}${demand.pressure === "high" || demand.pressure === "critical" ? ` with ${demand.pressure} patient demand` : ""}.`;
         recommendedAction = "Review transfer recommendation";
       } else if (occupancy >= 0.85) {
         primaryReason = `Bed occupancy is ${Math.round(occupancy * 100)}% with ${demand.trend} OPD demand.`;
