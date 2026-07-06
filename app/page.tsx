@@ -40,18 +40,16 @@ export default function CommandCenter() {
         </section>
 
         <aside className="w-[380px] shrink-0 flex flex-col gap-2 min-h-0 overflow-y-auto">
-          <Recommendations facilities={facilities} persistedRecs={recommendations} onSelect={setSelectedId} />
-          {!selected && <DistrictInterventionQueue facilities={facilities} recommendations={recommendations} onSelect={setSelectedId} />}
-          {selected ? (
-            <FacilityPanel facility={selected} />
-          ) : (
-            <InsightsRail facilities={facilities} onSelect={setSelectedId} />
-          )}
+          {/* Selected facility leads; district-wide sections follow. */}
+          {selected && <FacilityPanel facility={selected} />}
           {selected && (
             <button onClick={() => setSelectedId(null)} className="text-ink-3 text-xs text-left px-1 hover:text-ink-2">
               ← Back to district analysis
             </button>
           )}
+          <Recommendations facilities={facilities} persistedRecs={recommendations} onSelect={setSelectedId} />
+          {!selected && <DistrictInterventionQueue facilities={facilities} recommendations={recommendations} onSelect={setSelectedId} />}
+          {!selected && <InsightsRail facilities={facilities} onSelect={setSelectedId} />}
         </aside>
       </main>
 
