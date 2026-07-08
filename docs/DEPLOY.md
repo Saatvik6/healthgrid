@@ -1,10 +1,83 @@
-# Deploying HealthGrid AI to Firebase App Hosting
+# Deploying HealthGrid AI to Google Cloud
+
+Two supported paths. **Cloud Run (below)** is the plain Google Cloud experience and
+uses the repo `Dockerfile` — the container bakes the public keys at build time, so
+the map/Firestore work in the browser with no extra flags. **Firebase App Hosting**
+(further down) is the git-push alternative.
+
+Project: `healthgrid-22146` · Region: `asia-south1` (Mumbai, next to Firestore).
+
+---
+
+# Path A — Cloud Run (recommended, uses the Dockerfile)
+
+The repo has a proven multi-stage `Dockerfile` (Next.js standalone, serves on
+`$PORT`/8080). Because a Dockerfile is present, Cloud Run uses it for both the
+console and CLI flows — the public `NEXT_PUBLIC_*` keys are baked in the build, so
+there is **no build-env-var footgun**. You only set the two server secrets at runtime.
+
+## A1 — From the Google Cloud Console (no CLI install)
+
+1. Merge the Dockerfile to `main`:
+   https://github.com/nishantr14/healthgrid/compare/main...deploy?expand=1 → Merge.
+2. Console → **Cloud Run** → **Deploy container** → **Service** →
+   **Continuously deploy from a repository (source or function)** → **Set up with Cloud Build**.
+3. **Repository:** authorize GitHub → `nishantr14/healthgrid`. **Branch:** `main`.
+   **Build type:** `Dockerfile` (it auto-detects `/Dockerfile`). Save.
+4. Service settings:
+   - **Region:** `asia-south1`
+   - **Authentication:** Allow unauthenticated invocations
+   - **Container port:** `8080` (already set by the Dockerfile)
+5. Expand **Containers → Variables & Secrets** and add these **runtime** vars:
+
+   | Name | Value |
+   |---|---|
+   | `GEMINI_MODEL` | `gemini-3.5-flash` |
+   | `GEMINI_FALLBACK_MODEL` | `gemini-3-flash-preview` |
+   | `GEMINI_API_KEY` | *(from `.env.local`)* |
+   | `FIREBASE_SERVICE_ACCOUNT_B64` | *(from `.env.local`, the long base64 line)* |
+
+   (For `GEMINI_API_KEY` / the service account you can instead click **Reference a
+   secret** and store them in Secret Manager — cleaner, optional.)
+6. **Create.** First build ~4–7 min; you get a URL like
+   `https://healthgrid-xxxxx-el.a.run.app`.
+
+Future deploys: push to `main` → Cloud Build rebuilds automatically.
+
+## A2 — From the gcloud CLI (if you prefer terminal)
+
+```powershell
+# one-time: install gcloud, then
+gcloud auth login
+gcloud config set project healthgrid-22146
+gcloud run deploy healthgrid --source . --region asia-south1 --allow-unauthenticated `
+  --set-env-vars "GEMINI_MODEL=gemini-3.5-flash,GEMINI_FALLBACK_MODEL=gemini-3-flash-preview" `
+  --set-env-vars "^@^GEMINI_API_KEY=<key>@FIREBASE_SERVICE_ACCOUNT_B64=<base64>"
+```
+
+(The `^@^` sets `@` as the delimiter so the base64 value's characters don't break
+parsing. With the Dockerfile present, `--source .` uses it — no build-env flags needed.)
+
+## Post-deploy (both Cloud Run flows)
+
+1. **Restrict the Maps key to the live domain** or the map stays blank:
+   Cloud console → APIs & Services → Credentials → Maps JS key →
+   *Website restrictions* → add `https://*.run.app/*` → Save.
+2. Smoke-test the URL: map, click Seloo, approve a transfer, Copilot (EN + Hindi),
+   `/field` voice update, flip the Flood Alert scenario.
+3. Reseed to demo-perfect state before recording/judging:
+   ```powershell
+   npm run seed -- --demo-date <day>
+   npx tsx --env-file=.env.local scripts/seed-ai-state.ts
+   ```
+
+---
+
+# Path B — Firebase App Hosting (git-push alternative)
 
 App Hosting is Google Cloud's managed Next.js host: it builds from GitHub, runs on
-Cloud Run, keeps secrets in Secret Manager, and lives in the same project as our
-Firestore (`healthgrid-22146`). Config lives in [`apphosting.yaml`](../apphosting.yaml).
-
-Run every command below from `C:\bwa\healthgrid` in PowerShell.
+Cloud Run, keeps secrets in Secret Manager. Config lives in
+[`apphosting.yaml`](../apphosting.yaml). Run commands from `C:\bwa\healthgrid` in PowerShell.
 
 ## 0. Merge the config to `main` (once)
 
