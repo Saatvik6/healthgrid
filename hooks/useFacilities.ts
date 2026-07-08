@@ -20,7 +20,7 @@ export function useFacilities(): { facilities: Facility[]; loading: boolean } {
         if (cancelled) return;
         console.log("Firebase client project:", clientDb.app.options.projectId);
         unsub = onSnapshot(
-          query(collection(clientDb, "facilities"), orderBy("name")),
+          query(collection(clientDb, "facilities")),
           (snap) => {
             console.log("Facilities snapshot size:", snap.size);
             setFacilities(snap.docs.map((d) => d.data() as Facility));
