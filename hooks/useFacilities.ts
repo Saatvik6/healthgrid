@@ -18,6 +18,7 @@ export function useFacilities(): { facilities: Facility[]; loading: boolean } {
         const { clientDb } = await import("@/lib/firebase/client");
         const { collection, onSnapshot, orderBy, query } = await import("firebase/firestore");
         if (cancelled) return;
+        console.log("Firebase client project:", clientDb.app.options.projectId);
         unsub = onSnapshot(
           query(collection(clientDb, "facilities"), orderBy("name")),
           (snap) => {
