@@ -18,10 +18,19 @@ export function useFacilities(): { facilities: Facility[]; loading: boolean } {
         const { clientDb } = await import("@/lib/firebase/client");
         const { collection, onSnapshot, orderBy, query } = await import("firebase/firestore");
         if (cancelled) return;
-        unsub = onSnapshot(query(collection(clientDb, "facilities"), orderBy("name")), (snap) => {
-          setFacilities(snap.docs.map((d) => d.data() as Facility));
-          setLoading(false);
-        });
+        unsub = onSnapshot(
+          query(collection(clientDb, "facilities"), orderBy("name")),
+          (snap) => {
+            console.log("Facilities snapshot size:", snap.size);
+            setFacilities(snap.docs.map((d) => d.data() as Facility));
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Facilities Firestore error:", error);
+            setFacilities([]);
+            setLoading(false);
+          }
+        );
       } else {
         // No credentials yet: serve the locally generated district so the UI
         // is fully buildable/verifiable. Swaps to live Firestore via env vars.
