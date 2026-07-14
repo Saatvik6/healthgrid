@@ -5,6 +5,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import LanguageGate from "@/components/field/LanguageGate";
 import VoiceUpdate from "@/components/field/VoiceUpdate";
 import ScoreRing from "@/components/facility/ScoreRing";
+import FieldNotificationInbox from "@/components/notifications/FieldNotificationInbox";
 import { useFacilities } from "@/hooks/useFacilities";
 import { LANGS, STRINGS, type Lang } from "@/lib/field-i18n";
 import type { FieldUpdate } from "@/app/api/actions/update-facility/route";
@@ -124,6 +125,8 @@ export default function FieldPage() {
             <div className="rail-label">{t.score}</div>
           </div>
         </section>
+
+        <FieldNotificationInbox facilityId={facilityId} />
 
         {/* Voice — the centerpiece */}
         <VoiceUpdate facility={facility} lang={lang} t={t} />

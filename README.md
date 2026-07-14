@@ -93,6 +93,50 @@ npm run dev                  # http://localhost:3000 (DHO) · /field (worker)
 | `npm test` | 45 engine tests (risk, forecast, guardrails, generator) |
 | `npx tsx --env-file=.env.local scripts/deploy-rules.ts` | Publish Firestore security rules |
 
+## Operational Notification Center
+
+HealthGrid now closes the operational loop: **Detect → Recommend → Notify → Acknowledge → Monitor**. Selecting a facility in the Command Centre generates a deterministic report from its live risk, forecast, inventory, and pending redistribution data. The administrator can edit it, send it in-app and optionally through WhatsApp, and watch read/acknowledgement state update in realtime. Field View has a facility-scoped inbox with deliberate read and explicit acknowledgement actions.
+
+The server architecture is modular: `NotificationService` persists one document through `FirestoreNotificationRepository`, then dispatches through common in-app, WhatsApp, and disabled-SMS adapters. WhatsApp failure never rolls back the in-app notification.
+
+### Firestore schema and API routes
+
+Notifications are stored in `notifications/{notificationId}` with facility identity, title/report/priority, selected `channels`, per-channel `channelStatus`, aggregate `status`, read/acknowledgement fields, creator, and Firestore server timestamps. The Field inbox queries by `facilityId` and sorts client-side, so no composite index is required.
+
+- `POST /api/actions/notify` — validates the edited report, reloads trusted facility data, creates one notification, and dispatches selected channels.
+- `POST /api/actions/notifications/[notificationId]/read` — idempotently marks one notification read.
+- `POST /api/actions/notifications/[notificationId]/acknowledge` — idempotently acknowledges and also sets read state.
+
+Current Firestore rules intentionally retain the hackathon demo posture: public reads and no client writes. All notification mutations use Firebase Admin routes. Before production, add authentication and facility assignments so workers can read only their assigned facility.
+
+### WhatsApp configuration
+
+Set these server-only variables in `.env.local` or the deployment secret manager; never expose them with a `NEXT_PUBLIC_` prefix:
+
+```bash
+WHATSAPP_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_GRAPH_API_VERSION=v25.0
+WHATSAPP_DEMO_RECIPIENT=919876543210
+```
+
+In Meta WhatsApp Cloud API test mode, add the worker number as an allowed test recipient, copy the temporary/system-user access token and phone number ID, then set the variables above. A trusted phone stored on the facility (`whatsappNumber`, `fieldWorkerPhone`, `contactPhone`, or `phone`) takes precedence over `WHATSAPP_DEMO_RECIPIENT`. The browser never sends a recipient number. Without credentials or a recipient, WhatsApp is recorded as failed while in-app delivery continues.
+
+Run locally with the normal setup commands above. Deploy the rules and empty index manifest when Firebase configuration changes:
+
+```bash
+npx tsx --env-file=.env.local scripts/deploy-rules.ts
+firebase deploy --only firestore:indexes
+```
+
+### Notification demo walkthrough
+
+1. Open `/`, select Seloo PHC or another at-risk facility, and review/edit the generated report.
+2. Keep In-App selected, optionally select WhatsApp, and send once.
+3. Open `/field`, choose the same facility, and open the new notification to mark it read.
+4. Select **Acknowledge** after completing the action.
+5. Return to the selected facility in `/`; delivery, read, and acknowledgement update without a refresh.
+
 ## Team
 
 Built by **Nishant Rajpathak** & **Saatvik** with Claude Code.

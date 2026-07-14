@@ -7,6 +7,7 @@ import FacilityPanel from "@/components/facility/FacilityPanel";
 import InsightsRail from "@/components/insights/InsightsRail";
 import DistrictInterventionQueue from "@/components/insights/DistrictInterventionQueue";
 import IncidentScenarioControl from "@/components/IncidentScenarioControl";
+import OperationalNotificationCenter from "@/components/notifications/OperationalNotificationCenter";
 import Recommendations from "@/components/insights/Recommendations";
 import MapCanvas from "@/components/map/MapCanvas";
 import PulseHeader from "@/components/PulseHeader";
@@ -47,6 +48,9 @@ export default function CommandCenter() {
         <aside className="w-[380px] shrink-0 flex flex-col gap-2 min-h-0 overflow-y-auto">
           {/* Selected facility leads; district-wide sections follow. */}
           {selected && <FacilityPanel facility={selected} scenario={scenario} />}
+          {selected && (
+            <OperationalNotificationCenter facility={selected} facilities={facilities} recommendations={recommendations} />
+          )}
           {selected && (
             <button onClick={() => setSelectedId(null)} className="text-ink-3 text-xs text-left px-1 hover:text-ink-2">
               ← Back to district analysis
