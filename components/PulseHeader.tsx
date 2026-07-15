@@ -55,6 +55,14 @@ export default function PulseHeader({ facilities, pendingRecommendations, onOpen
         >
           Copilot
         </button>
+        <a
+          href="/api/report/district"
+          download
+          title="Download the full district situation report (PDF)"
+          className="rounded border border-line px-2.5 py-1.5 text-xs font-medium text-ink-2 hover:border-ink-3 hover:bg-surface-2 hover:text-ink-1"
+        >
+          District report ↓
+        </a>
         <Link href="/field" className="rounded border border-line px-2.5 py-1.5 text-xs font-medium text-ink-2 hover:border-ink-3 hover:bg-surface-2 hover:text-ink-1">
           Field view →
         </Link>
