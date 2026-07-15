@@ -47,6 +47,7 @@ export default function FieldNotificationInbox({ facilityId }: { facilityId: str
           setNotifications(
             snapshot.docs
               .map((item) => ({ ...item.data(), id: item.id }) as OperationalNotification)
+              .filter((notification) => !notification.acknowledged)
               .sort((left, right) => timestampMillis(right.createdAt) - timestampMillis(left.createdAt)),
           );
           setLoadedFacilityId(facilityId);
@@ -71,6 +72,14 @@ export default function FieldNotificationInbox({ facilityId }: { facilityId: str
       const response = await fetch(`/api/actions/notifications/${encodeURIComponent(notificationId)}/${action}`, { method: "POST" });
       const body = (await response.json()) as { success?: boolean; error?: string };
       if (!response.ok || !body.success) throw new Error(body.error ?? `Notification could not be marked ${action}`);
+      if (action === "acknowledge") {
+        setNotifications((current) => current.filter((notification) => notification.id !== notificationId));
+        setOpenIds((current) => {
+          const next = new Set(current);
+          next.delete(notificationId);
+          return next;
+        });
+      }
       setError("");
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Notification update failed");
