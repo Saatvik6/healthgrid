@@ -93,6 +93,10 @@ npm run dev                  # http://localhost:3000 (DHO) · /field (worker)
 | `npm test` | 45 engine tests (risk, forecast, guardrails, generator) |
 | `npx tsx --env-file=.env.local scripts/deploy-rules.ts` | Publish Firestore security rules |
 
+## District situation report (PDF)
+
+The command center header has a **District report ↓** button that downloads a full PDF situation report — district summary, an all-facility triage table sorted most-urgent first, and per-facility score breakdowns with medicine stock-out forecasts. It is generated server-side (`GET /api/report/district`) from the same deterministic engines that power the screen, so the report can never disagree with the map. Built with pdf-lib (pure JS, no runtime font files), so it works unchanged on Cloud Run.
+
 ## Operational Notification Center
 
 HealthGrid now closes the operational loop: **Detect → Recommend → Notify → Acknowledge → Monitor**. Selecting a facility in the Command Centre generates a deterministic report from its live risk, forecast, inventory, and pending redistribution data. The administrator can edit it, send it in-app and optionally through WhatsApp, and watch read/acknowledgement state update in realtime. Field View has a facility-scoped inbox with deliberate read and explicit acknowledgement actions.
