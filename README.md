@@ -143,4 +143,4 @@ firebase deploy --only firestore:indexes
 
 ## Team
 
-Built by **Nishant Rajpathak** & **Saatvik** with Claude Code.
+Built by **Nishant Rajpathak** & **Saatvik Das**.
