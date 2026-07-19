@@ -1,10 +1,10 @@
 # Builds the 3-slide Demo Day deck (New Delhi, before MPs — exactly 3 slides,
-# 3 minutes) in a clean light theme: white background, near-black ink, deep
-# HealthGrid pink as the only accent. Fonts are Segoe UI throughout so the
-# deck renders identically on any Windows machine — nothing to embed.
+# 3 minutes) in the HealthGrid brand theme: dark plum background, pastel-pink
+# headings, lavender chip labels. Fonts are Segoe UI throughout so the deck
+# renders identically on any Windows machine — nothing to embed.
 #   1. Problem & Solution        — headline stats + existing-vs-HealthGrid table
 #   2. Key Features & Innovation — command-center screenshot + feature cards
-#   3. Impact & Scalability      — measured numbers + scale rails + roadmap + ask
+#   3. Impact & Scalability      — qualitative points + scale rails + roadmap + ask
 # Run: python scripts/demoday-deck-light.py [out.pptx]
 import sys
 from pptx import Presentation
@@ -13,17 +13,19 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Emu, Inches, Pt
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else r"docs/HealthGrid-Demoday-3Slides-Light.pptx"
+OUT = sys.argv[1] if len(sys.argv) > 1 else r"docs/HealthGrid-Demoday-3Slides-Brand.pptx"
 SHOTS = r"C:\Users\nisha\AppData\Local\Temp\claude\C--bwa\930f78d5-b03d-4478-8177-d9aa79f4a0bb\scratchpad"
 
-INK = RGBColor(0x1B, 0x16, 0x30)
-GREY = RGBColor(0x5C, 0x56, 0x6E)
-MUTED = RGBColor(0x8A, 0x84, 0x96)
-ACCENT = RGBColor(0xD6, 0x33, 0x6C)
-ACCENT_TINT = RGBColor(0xFC, 0xEB, 0xF2)
-CARD = RGBColor(0xF6, 0xF4, 0xF8)
-LINE = RGBColor(0xE6, 0xE2, 0xEC)
+BG = RGBColor(0x0F, 0x09, 0x20)          # brand dark plum
+INK = RGBColor(0xF2, 0xEC, 0xF6)          # primary text on dark
+GREY = RGBColor(0xB9, 0xAE, 0xCB)         # secondary text
+MUTED = RGBColor(0x8D, 0x81, 0xA5)        # footnotes
+ACCENT = RGBColor(0xFF, 0x8A, 0xAF)       # HealthGrid pastel pink
+ACCENT_TINT = RGBColor(0x2B, 0x17, 0x35)  # pink-tinted dark fill
+CARD = RGBColor(0x19, 0x11, 0x29)         # surface
+LINE = RGBColor(0x35, 0x2A, 0x52)         # borders
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+DARK_ON_PINK = RGBColor(0x2E, 0x10, 0x22)
 FONT = "Segoe UI"
 
 pres = Presentation()
@@ -33,7 +35,13 @@ BLANK = pres.slide_layouts[6]
 
 
 def add_slide():
-    return pres.slides.add_slide(BLANK)
+    slide = pres.slides.add_slide(BLANK)
+    bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, pres.slide_width, pres.slide_height)
+    bg.fill.solid()
+    bg.fill.fore_color.rgb = BG
+    bg.line.fill.background()
+    bg.shadow.inherit = False
+    return slide
 
 
 def rect(slide, x, y, w, h, fill, line_color=None, line_w=0.75, round_=0.0):
@@ -107,7 +115,7 @@ def accent_band(slide, y, h, runs, fill=ACCENT_TINT, color=INK, size=13):
 # ============================ Slide 1 ======================================
 s = add_slide()
 pill(s, "HEALTHGRID AI  ·  PROBLEM & SOLUTION")
-text(s, 0.7, 1.0, 12.0, 0.65, "India's primary healthcare runs blind between monthly reports.", size=29, bold=True)
+text(s, 0.7, 1.0, 12.0, 0.65, "India's primary healthcare runs blind between monthly reports.", size=29, bold=True, color=ACCENT)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "Medicines, beds and staff for a district's health centres live in paper registers — the district finds out about a crisis about a month too late.",
      size=13, color=GREY)
@@ -134,7 +142,7 @@ rows = [
     ("Static dashboards", "Forecast → recommend → approve"),
 ]
 ty, rh = 2.78, 0.66
-rect(s, 5.62, ty, 6.99, rh * len(rows), WHITE, LINE, round_=0.0)
+rect(s, 5.62, ty, 6.99, rh * len(rows), CARD, LINE, round_=0.0)
 for i, (old, new) in enumerate(rows):
     y = ty + i * rh
     if i:
@@ -153,7 +161,7 @@ footer(s, 1)
 # ============================ Slide 2 ======================================
 s = add_slide()
 pill(s, "KEY FEATURES & INNOVATION")
-text(s, 0.7, 1.0, 12.0, 0.65, "A real-time command center for every district decision.", size=29, bold=True)
+text(s, 0.7, 1.0, 12.0, 0.65, "A real-time command center for every district decision.", size=29, bold=True, color=ACCENT)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "Deterministic engines score every facility — Gemini explains the numbers, listens to the frontline, and speaks its languages.",
      size=13, color=GREY)
@@ -183,7 +191,7 @@ footer(s, 2)
 # ============================ Slide 3 ======================================
 s = add_slide()
 pill(s, "IMPACT & SCALABILITY")
-text(s, 0.7, 1.0, 12.0, 0.65, "One district first. Built for 800+.", size=29, bold=True)
+text(s, 0.7, 1.0, 12.0, 0.65, "One district first. Built for 800+.", size=29, bold=True, color=ACCENT)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "A simulated month in Wardha district — every decision produced by the same engines and guardrails that run in the product.",
      size=13, color=GREY)
@@ -217,8 +225,8 @@ text(s, rx, 4.52, 5.62, 1.5, [
 ], size=11, color=INK, leading=1.1, space_before=6)
 
 accent_band(s, 6.32, 0.62, [[
-    ("Our ask: sanction one pilot district.  ", {"bold": True, "color": WHITE}),
-    ("Its own numbers will make the case to the state.", {"color": WHITE}),
+    ("Our ask: sanction one pilot district.  ", {"bold": True, "color": DARK_ON_PINK}),
+    ("Its own numbers will make the case to the state.", {"color": DARK_ON_PINK}),
 ]], fill=ACCENT, size=14)
 footer(s, 3)
 
