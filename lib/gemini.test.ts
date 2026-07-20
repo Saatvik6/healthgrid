@@ -9,8 +9,8 @@ vi.mock("@google/genai", () => ({
 }));
 
 vi.mock("./config", () => ({
-  GEMINI_MODEL: "gemini-3.5-flash",
-  GEMINI_FALLBACK_MODEL: "gemini-3-flash-preview",
+  GEMINI_MODEL: "gemini-3-flash-preview",
+  GEMINI_FALLBACK_MODEL: "gemini-3.1-flash-lite",
   env: () => "test-api-key",
 }));
 
@@ -31,11 +31,11 @@ describe("generateWithFallback", () => {
 
     expect(response.text).toBe("fallback response");
     expect(geminiMocks.generateContent).toHaveBeenNthCalledWith(1, {
-      model: "gemini-3.5-flash",
+      model: "gemini-3-flash-preview",
       contents: "Why is Seloo critical?",
     });
     expect(geminiMocks.generateContent).toHaveBeenNthCalledWith(2, {
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-flash-lite",
       contents: "Why is Seloo critical?",
     });
   });
