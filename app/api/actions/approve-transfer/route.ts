@@ -1,22 +1,24 @@
 import { computeRisk } from "@/lib/engine/risk";
 import type { Facility } from "@/lib/engine/types";
 
+const CONFLICT_ERRORS = new Set([
+  "recommendation not found",
+  "recommendation already resolved",
+  "source stock changed; re-generate",
+]);
+
 /** Executes an approved transfer atomically: stock moves, both facilities'
     scores recompute, the recommendation closes, and an event is logged. The
     realtime listeners make the map react — this is demo beat 4. */
 export async function POST(req: Request) {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
-    return Response.json({ error: "Execution requires the live database (Firebase credentials missing)." }, { status: 503 });
-  }
   const { recommendationId } = await req.json();
   if (typeof recommendationId !== "string") {
     return Response.json({ error: "recommendationId required" }, { status: 400 });
   }
 
-  const { adminDb } = await import("@/lib/firebase/admin");
-  const db = adminDb();
-
   try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    const db = adminDb();
     const result = await db.runTransaction(async (tx) => {
       const recRef = db.collection("recommendations").doc(recommendationId);
       const recSnap = await tx.get(recRef);
@@ -63,6 +65,11 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, ...result });
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : "transaction failed" }, { status: 409 });
+    const message = e instanceof Error ? e.message : String(e);
+    if (CONFLICT_ERRORS.has(message)) {
+      return Response.json({ error: message }, { status: 409 });
+    }
+    console.error("Transfer approval failed", { message });
+    return Response.json({ error: "Transfer approval failed" }, { status: 500 });
   }
 }

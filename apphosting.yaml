@@ -1,6 +1,6 @@
 # Firebase App Hosting config. Public NEXT_PUBLIC_* keys are baked into the
-# client bundle (not secret) so they live inline; GEMINI_API_KEY and the admin
-# service account are pulled from Secret Manager at runtime.
+# client bundle (not secret) so they live inline. GEMINI_API_KEY is pulled from
+# Secret Manager; FIREBASE_SERVICE_ACCOUNT_B64 remains a temporary override.
 runConfig:
   minInstances: 0
   maxInstances: 2

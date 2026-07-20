@@ -5,16 +5,16 @@ function validId(value: string): boolean {
 }
 
 export async function POST(_request: Request, context: { params: Promise<{ notificationId: string }> }) {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
-    return Response.json({ success: false, error: "Notification updates require Firebase server credentials" }, { status: 503 });
-  }
   const { notificationId } = await context.params;
   if (!validId(notificationId)) return Response.json({ success: false, error: "invalid notification id" }, { status: 400 });
   try {
     const state = await new FirestoreNotificationRepository().markRead(notificationId);
     if (!state) return Response.json({ success: false, error: "notification not found" }, { status: 404 });
     return Response.json({ success: true, ...state });
-  } catch {
+  } catch (error) {
+    console.error("Notification read update failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return Response.json({ success: false, error: "Notification could not be marked read" }, { status: 500 });
   }
 }

@@ -80,11 +80,24 @@ Operational data (daily stock, attendance, footfall) does not exist publicly for
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in keys (Gemini, Firebase web config, Maps, service account)
+cp .env.example .env.local   # fill in Gemini, Firebase web config, and Maps keys
 npm run check-keys           # verifies all three credentials
 npm run seed                 # seeds the Wardha district into Firestore
 npm run dev                  # http://localhost:3000 (DHO) · /field (worker)
 ```
+
+Firebase Admin supports two local credential modes. Either set
+`FIREBASE_SERVICE_ACCOUNT_B64` in `.env.local`, or leave it unset and configure
+Application Default Credentials:
+
+```bash
+gcloud auth application-default login
+gcloud config set project healthgrid-22146
+```
+
+Do not commit a service-account JSON file. In Cloud Run, leave the Base64
+override unset after migration verification; Admin uses the service account
+attached to the `healthgrid` service.
 
 | Script | Purpose |
 |---|---|

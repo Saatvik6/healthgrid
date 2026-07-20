@@ -2,7 +2,7 @@
    Firestore so the UI shows full AI state while the free-tier daily quota is
    exhausted. The live pipeline regenerates all of this whenever quota exists.
    Run after seed: npx tsx --env-file=.env.local scripts/seed-ai-state.ts */
-import { adminDb } from "../lib/firebase/admin";
+import { adminDb } from "../lib/firebase/admin-core";
 
 const insights = {
   "seloo-phc": {

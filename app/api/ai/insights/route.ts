@@ -36,10 +36,8 @@ Explain WHY a facility is in its current state, grounded ONLY in the data provid
 // Two-level cache keyed by the facility's lastUpdated stamp: module memory,
 // then Firestore (survives restarts/instances — reloads cost zero quota).
 const cache = new Map<string, { at: number; insights: Insights }>();
-const HAS_ADMIN = !!process.env.FIREBASE_SERVICE_ACCOUNT_B64;
 
 async function readPersistedCache(facilityId: string, at: number): Promise<Insights | null> {
-  if (!HAS_ADMIN) return null;
   const { adminDb } = await import("@/lib/firebase/admin");
   const snap = await adminDb().collection("insightsCache").doc(facilityId).get();
   const data = snap.data();
@@ -47,7 +45,6 @@ async function readPersistedCache(facilityId: string, at: number): Promise<Insig
 }
 
 async function persistCache(facilityId: string, at: number, insights: Insights) {
-  if (!HAS_ADMIN) return;
   const { adminDb } = await import("@/lib/firebase/admin");
   await adminDb().collection("insightsCache").doc(facilityId).set({ at, insights });
 }
