@@ -154,6 +154,6 @@ firebase deploy --only firestore:indexes
 4. Select **Acknowledge** after completing the action.
 5. Return to the selected facility in `/`; delivery, read, and acknowledgement update without a refresh.
 
-## Team
+## Team Noida Boys
 
-Built by **Nishant Rajpathak** & **Saatvik** with Claude Code.
+Built by **Nishant Rajpathak** & **Saatvik Das**.
