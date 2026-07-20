@@ -14,6 +14,9 @@ function isTransient(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e);
   return (
     msg.includes("429") ||
+    msg.includes("404") ||
+    msg.includes("NOT_FOUND") ||
+    msg.includes("no longer available") ||
     msg.includes("RESOURCE_EXHAUSTED") ||
     msg.includes("quota") ||
     msg.includes("503") ||
@@ -35,8 +38,6 @@ const MODEL_POOL: string[] = [
       GEMINI_FALLBACK_MODEL,
       "gemini-3.5-flash",
       "gemini-3-flash-preview",
-      "gemini-2.5-flash",
-      "gemini-2.5-flash-lite",
     ]),
   ),
 ];
