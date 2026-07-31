@@ -1,6 +1,6 @@
 # Builds the 3-slide Demo Day deck (New Delhi, before MPs — exactly 3 slides,
-# 3 minutes) in the HealthGrid brand theme: dark plum background, pastel-pink
-# headings, lavender chip labels. Fonts are Segoe UI throughout so the deck
+# 3 minutes) in the HealthGrid brand theme: dark plum background, white
+# headings, and the product UI's teal as the single restrained accent. Fonts are Segoe UI throughout so the deck
 # renders identically on any Windows machine — nothing to embed.
 #   1. Problem & Solution        — headline stats + existing-vs-HealthGrid table
 #   2. Key Features & Innovation — command-center screenshot + feature cards
@@ -14,18 +14,18 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Emu, Inches, Pt
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else r"docs/HealthGrid-Demoday-3Slides-Brand.pptx"
-SHOTS = r"C:\Users\nisha\AppData\Local\Temp\claude\C--bwa\930f78d5-b03d-4478-8177-d9aa79f4a0bb\scratchpad"
+SHOTS = r"docs/screenshots"
 
 BG = RGBColor(0x0F, 0x09, 0x20)          # brand dark plum
 INK = RGBColor(0xF2, 0xEC, 0xF6)          # primary text on dark
 GREY = RGBColor(0xB9, 0xAE, 0xCB)         # secondary text
 MUTED = RGBColor(0x8D, 0x81, 0xA5)        # footnotes
-ACCENT = RGBColor(0xFF, 0x8A, 0xAF)       # HealthGrid pastel pink
-ACCENT_TINT = RGBColor(0x2B, 0x17, 0x35)  # pink-tinted dark fill
+ACCENT = RGBColor(0x3E, 0xC9, 0xB8)       # product-UI teal
+ACCENT_TINT = RGBColor(0x10, 0x26, 0x2A)  # teal-tinted dark fill
 CARD = RGBColor(0x19, 0x11, 0x29)         # surface
 LINE = RGBColor(0x35, 0x2A, 0x52)         # borders
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
-DARK_ON_PINK = RGBColor(0x2E, 0x10, 0x22)
+DARK_ON_ACCENT = RGBColor(0x06, 0x21, 0x1E)
 FONT = "Segoe UI"
 
 pres = Presentation()
@@ -115,7 +115,7 @@ def accent_band(slide, y, h, runs, fill=ACCENT_TINT, color=INK, size=13):
 # ============================ Slide 1 ======================================
 s = add_slide()
 pill(s, "HEALTHGRID AI  ·  PROBLEM & SOLUTION")
-text(s, 0.7, 1.0, 12.0, 0.65, "India's primary healthcare runs blind between monthly reports.", size=29, bold=True, color=ACCENT)
+text(s, 0.7, 1.0, 12.0, 0.65, "India's primary healthcare runs blind between monthly reports.", size=29, bold=True)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "Medicines, beds and staff for a district's health centres live in paper registers — the district finds out about a crisis about a month too late.",
      size=13, color=GREY)
@@ -161,7 +161,7 @@ footer(s, 1)
 # ============================ Slide 2 ======================================
 s = add_slide()
 pill(s, "KEY FEATURES & INNOVATION")
-text(s, 0.7, 1.0, 12.0, 0.65, "A real-time command center for every district decision.", size=29, bold=True, color=ACCENT)
+text(s, 0.7, 1.0, 12.0, 0.65, "A real-time command center for every district decision.", size=29, bold=True)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "Deterministic engines score every facility — Gemini explains the numbers, listens to the frontline, and speaks its languages.",
      size=13, color=GREY)
@@ -191,7 +191,7 @@ footer(s, 2)
 # ============================ Slide 3 ======================================
 s = add_slide()
 pill(s, "IMPACT & SCALABILITY")
-text(s, 0.7, 1.0, 12.0, 0.65, "One district first. Built for 800+.", size=29, bold=True, color=ACCENT)
+text(s, 0.7, 1.0, 12.0, 0.65, "One district first. Built for 800+.", size=29, bold=True)
 text(s, 0.7, 1.62, 12.0, 0.4,
      "A simulated month in Wardha district — every decision produced by the same engines and guardrails that run in the product.",
      size=13, color=GREY)
@@ -225,8 +225,8 @@ text(s, rx, 4.52, 5.62, 1.5, [
 ], size=11, color=INK, leading=1.1, space_before=6)
 
 accent_band(s, 6.32, 0.62, [[
-    ("Our ask: sanction one pilot district.  ", {"bold": True, "color": DARK_ON_PINK}),
-    ("Its own numbers will make the case to the state.", {"color": DARK_ON_PINK}),
+    ("Our ask: sanction one pilot district.  ", {"bold": True, "color": DARK_ON_ACCENT}),
+    ("Its own numbers will make the case to the state.", {"color": DARK_ON_ACCENT}),
 ]], fill=ACCENT, size=14)
 footer(s, 3)
 
