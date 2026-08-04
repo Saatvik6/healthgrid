@@ -70,3 +70,5 @@ env:
       - RUNTIME
   - variable: WHATSAPP_APP_SECRET
     secret: WHATSAPP_APP_SECRET
+    availability:
+      - RUNTIME
