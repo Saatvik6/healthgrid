@@ -10,8 +10,8 @@ vi.mock("@google/genai", () => ({
 
 vi.mock("./config", () => ({
   GEMINI_MODEL: "gemini-3-flash-preview",
-  GEMINI_FALLBACK_MODEL: "gemini-3.1-flash-lite",
-  env: () => "test-api-key",
+    GEMINI_FALLBACK_MODEL: "gemini-3.1-flash-lite",
+    env:() => "test-api-key",
 }));
 
 beforeEach(() => {
