@@ -52,3 +52,21 @@ env:
     secret: FIREBASE_SERVICE_ACCOUNT_B64
     availability:
       - RUNTIME
+  - variable: WHATSAPP_TOKEN
+    secret: WHATSAPP_TOKEN
+    availability:
+      - RUNTIME
+  - variable: WHATSAPP_PHONE_NUMBER_ID
+    secret: WHATSAPP_PHONE_NUMBER_ID
+    availability:
+      - RUNTIME
+  - variable: WHATSAPP_GRAPH_API_VERSION
+    value: v25.0
+    availability:
+      - RUNTIME
+  - variable: WHATSAPP_DEMO_RECIPIENT
+    value: ""
+    availability:
+      - RUNTIME
+  - variable: WHATSAPP_APP_SECRET
+    secret: WHATSAPP_APP_SECRET

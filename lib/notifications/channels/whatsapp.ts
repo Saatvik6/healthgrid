@@ -60,9 +60,12 @@ export class WhatsAppNotificationChannel implements NotificationChannelAdapter {
       );
       const body = (await response.json().catch(() => ({}))) as ProviderResponse;
       if (!response.ok) {
+        const providerMessage = typeof body.error?.message === "string" ? body.error.message.trim() : "";
         return failed(
           body.error?.code ? `provider_${body.error.code}` : `provider_http_${response.status}`,
-          `WhatsApp provider rejected the message (HTTP ${response.status})`,
+          providerMessage
+            ? `WhatsApp provider rejected the message: ${providerMessage} (HTTP ${response.status})`
+            : `WhatsApp provider rejected the message (HTTP ${response.status})`,
         );
       }
       const providerMessageId = body.messages?.[0]?.id;

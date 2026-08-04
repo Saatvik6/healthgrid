@@ -119,12 +119,15 @@ export default function OperationalNotificationCenter({
         updatedAt: null,
       });
       const partial = body.status === "partially_delivered" || body.status === "failed";
+      const whatsappFailure = body.channels?.whatsapp?.state === "failed" && body.channels.whatsapp.errorMessage;
       setFeedback({
         kind: partial ? "partial" : "success",
         message: partial
-          ? channels.in_app
-            ? "In-app delivery was saved, but one selected channel needs attention."
-            : "The notification was saved, but the selected delivery channel failed."
+          ? whatsappFailure
+            ? `WhatsApp delivery failed: ${body.channels.whatsapp.errorMessage}`
+            : channels.in_app
+              ? "In-app delivery was saved, but one selected channel needs attention."
+              : "The notification was saved, but the selected delivery channel failed."
           : "Notification sent successfully.",
       });
     } catch (error) {
