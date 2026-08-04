@@ -65,7 +65,7 @@ env:
     availability:
       - RUNTIME
   - variable: WHATSAPP_DEMO_RECIPIENT
-    value: ""
+    value: "919810677347"
     availability:
       - RUNTIME
   - variable: WHATSAPP_APP_SECRET
