@@ -1,5 +1,7 @@
 # HealthGrid AI
 
+## 🏆 Winner of Google Cloud X Hack2Skill "Build with AI: Code for Communities"
+
 **An AI command center for district public healthcare.** HMIS systems record what happened; HealthGrid decides what to do next — and a health worker speaking Hindi into a phone changes the district map in front of the District Health Officer's eyes.
 
 Built for the Google **Build with AI — Code for Communities** hackathon · Smart Health track.
