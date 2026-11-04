@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { GeminiUnavailable, generateWithFallback } from "@/lib/gemini";
 import { getFacility } from "@/lib/server/data";
+import { GNANI_LANG, transcribe } from "@/lib/gnani";
 
 const SCHEMA = {
   type: Type.OBJECT,
@@ -23,20 +24,21 @@ const SCHEMA = {
       },
     },
     confidence: { type: Type.NUMBER, description: "0-1: how certain you are the updates match the speech" },
-    transcript: { type: Type.STRING, description: "Verbatim transcript in the language spoken" },
     echo: { type: Type.STRING, description: "One-line confirmation of what will be updated, in the worker's chosen language" },
   },
-  required: ["updates", "confidence", "transcript", "echo"],
+  required: ["updates", "confidence", "echo"],
 };
 
-/** Speech → structured inventory update. NO database write happens here: the
+/** Speech → structured inventory update.
+    Pipeline: Gnani Prisma (speech → text, Indic + code-mixed) → Gemini (text → structured JSON). NO database write happens here: the
     worker always confirms on screen before anything is applied. */
 export async function POST(req: Request) {
-  const { audioBase64, mimeType, facilityId, lang } = (await req.json()) as {
+  const { audioBase64, mimeType, facilityId, lang, langCode } = (await req.json()) as {
     audioBase64: string;
     mimeType: string;
     facilityId: string;
     lang?: string; // "Hindi" | "Marathi" | "English" — the worker's UI language
+    langCode?: string; // "hi" | "mr" | "en"
   };
   if (!audioBase64 || !facilityId) return Response.json({ error: "audio and facilityId required" }, { status: 400 });
   // ~30s of opus audio stays well under this; longer means something is wrong.
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
   const facility = await getFacility(facilityId);
   if (!facility) return Response.json({ error: "facility not found" }, { status: 404 });
 
-  const system = `You convert a health worker's spoken update (Hindi, Marathi, English, or mixed) at ${facility.name} into structured updates.
+  const system = `You convert a health worker's spoken update (Hindi, Marathi, English, or mixed; already transcribed to text by a speech model) at ${facility.name} into structured updates.
 
 CURRENT FACILITY STATE (use this to resolve relative statements):
 Medicines (id: name — current stock): ${Object.values(facility.inventory)
@@ -73,31 +75,42 @@ RULES:
 - Write "echo" in ${lang || "Hindi"}; when you derived a value, show the arithmetic there (e.g. "Paracetamol: 80 used → 404 left").
 - If the speech is not an inventory/beds/doctors/tests update, return empty updates with confidence 0. If a quantity is genuinely ambiguous, lower the confidence below 0.7.`;
 
+  // 1. Speech → text with Gnani Prisma.
+  let stt;
+  try {
+    const audio = new Blob([Buffer.from(audioBase64, "base64")], { type: mimeType || "audio/wav" });
+    stt = await transcribe(audio);
+  } catch (e) {
+    console.error("gnani stt error:", e instanceof Error ? e.message : e);
+    return Response.json({ error: "Could not hear the audio. Please try again." }, { status: 502 });
+  }
+  if (!stt.transcript) {
+    return Response.json({ updates: [], confidence: 0, transcript: "", echo: "", stt: { model: "prisma" } });
+  }
+
+  // 2. Text → structured updates with Gemini.
   try {
     const res = await generateWithFallback({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { inlineData: { mimeType: mimeType || "audio/webm", data: audioBase64 } },
-            { text: "Convert this spoken update into structured JSON." },
-          ],
-        },
-      ],
+      contents: `Transcript of the spoken update: """${stt.transcript}"""\n\nConvert it into structured JSON.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: SCHEMA,
         systemInstruction: system,
-        // Parsing doesn't need thinking, and thinking blows the latency budget.
         thinkingConfig: { thinkingBudget: 0 },
-        abortSignal: AbortSignal.timeout(55_000),
+        abortSignal: AbortSignal.timeout(30_000),
       },
     });
     const text = res.text;
     if (!text) throw new GeminiUnavailable("empty");
-    return Response.json(JSON.parse(text));
+    const parsed = JSON.parse(text);
+    return Response.json({
+      ...parsed,
+      transcript: stt.transcript,
+      echoLang: GNANI_LANG[langCode ?? "hi"] ?? "hi-IN",
+      stt: { model: "gnani-prisma-v3", detectedLanguage: stt.detectedLanguage, latencyMs: stt.latencyMs },
+    });
   } catch (e) {
-    console.error("voice error:", e instanceof Error ? e.message : e);
-    return Response.json({ error: "Could not understand the audio. Please try again." }, { status: 502 });
+    console.error("voice parse error:", e instanceof Error ? e.message : e);
+    return Response.json({ error: "Could not understand the update. Please try again." }, { status: 502 });
   }
 }

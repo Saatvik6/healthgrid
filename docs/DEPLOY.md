@@ -153,6 +153,9 @@ migration; keep it until the App Hosting service account has equivalent IAM.
 # Gemini API key (short). When prompted, paste the GEMINI_API_KEY value.
 firebase apphosting:secrets:set GEMINI_API_KEY
 
+# Gnani speech key (required: field voice has no fallback without it).
+firebase apphosting:secrets:set GNANI_API_KEY
+
 # Optional migration override; remove only after ADC is verified:
 $encodedCredential = Get-Content .env.local | Where-Object { $_ -like 'FIREBASE_SERVICE_ACCOUNT_B64=*' }
 ($encodedCredential -replace '^FIREBASE_SERVICE_ACCOUNT_B64=','') | Out-File -NoNewline -Encoding ascii $env:TEMP\sa.txt
