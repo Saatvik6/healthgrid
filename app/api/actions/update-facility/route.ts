@@ -8,12 +8,11 @@ export interface FieldUpdate {
   value: number | boolean;
 }
 
+const CONFLICT_ERRORS = new Set(["facility not found", "no valid updates"]);
+
 /** Shared write path for manual buttons AND confirmed voice updates:
     apply → recompute risk → log event. Realtime listeners do the rest. */
 export async function POST(req: Request) {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
-    return Response.json({ error: "Updates require the live database." }, { status: 503 });
-  }
   const { facilityId, updates, source } = (await req.json()) as {
     facilityId: string;
     updates: FieldUpdate[];
@@ -23,10 +22,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "facilityId and updates required" }, { status: 400 });
   }
 
-  const { adminDb } = await import("@/lib/firebase/admin");
-  const db = adminDb();
-
   try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    const db = adminDb();
     const result = await db.runTransaction(async (tx) => {
       const ref = db.collection("facilities").doc(facilityId);
       const snap = await tx.get(ref);
@@ -78,6 +76,11 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, ...result });
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : "update failed" }, { status: 409 });
+    const message = e instanceof Error ? e.message : String(e);
+    if (CONFLICT_ERRORS.has(message)) {
+      return Response.json({ error: message }, { status: 409 });
+    }
+    console.error("Facility update failed", { message });
+    return Response.json({ error: "Facility update failed" }, { status: 500 });
   }
 }

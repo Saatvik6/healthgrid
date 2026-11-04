@@ -69,9 +69,18 @@ export default function FieldNotificationInbox({ facilityId }: { facilityId: str
     if (pendingIds.has(notificationId)) return;
     setPendingIds((current) => new Set(current).add(notificationId));
     try {
-      const response = await fetch(`/api/actions/notifications/${encodeURIComponent(notificationId)}/${action}`, { method: "POST" });
-      const body = (await response.json()) as { success?: boolean; error?: string };
-      if (!response.ok || !body.success) throw new Error(body.error ?? `Notification could not be marked ${action}`);
+      const response = await fetch("/api/actions/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId, action }),
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const body = contentType.includes("application/json")
+        ? await response.json() as { success?: boolean; error?: string }
+        : null;
+      if (!response.ok || !body?.success) {
+        throw new Error(body?.error ?? `Notification could not be marked ${action} (HTTP ${response.status})`);
+      }
       if (action === "acknowledge") {
         setNotifications((current) => current.filter((notification) => notification.id !== notificationId));
         setOpenIds((current) => {

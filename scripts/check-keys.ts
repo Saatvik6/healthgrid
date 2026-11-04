@@ -1,9 +1,8 @@
 /* Verifies all external credentials before we build on them.
    Run: npx tsx --env-file=.env.local scripts/check-keys.ts */
 import { GoogleGenAI } from "@google/genai";
-import { cert, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import { env, GEMINI_MODEL } from "../lib/config";
+import { adminDb } from "../lib/firebase/admin-core";
 
 async function checkGemini() {
   const ai = new GoogleGenAI({ apiKey: env("GEMINI_API_KEY") });
@@ -19,9 +18,7 @@ async function checkGemini() {
 }
 
 async function checkFirestore() {
-  const json = Buffer.from(env("FIREBASE_SERVICE_ACCOUNT_B64"), "base64").toString("utf8");
-  const app = initializeApp({ credential: cert(JSON.parse(json)) });
-  const db = getFirestore(app);
+  const db = adminDb();
   await db.collection("_healthcheck").doc("ping").set({ at: Date.now() });
   await db.collection("_healthcheck").doc("ping").delete();
   console.log("FIRESTORE OK");

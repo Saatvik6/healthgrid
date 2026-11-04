@@ -23,6 +23,7 @@ describe("WhatsAppNotificationChannel", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { code: 131000, message: "secret" } }), { status: 400 })));
     const result = await new WhatsAppNotificationChannel({ token: "top-secret-token", phoneNumberId: "phone" }).send(input);
     expect(result).toMatchObject({ state: "failed", errorCode: "provider_131000" });
+    expect(result.errorMessage).toContain("secret");
     expect(JSON.stringify(result)).not.toContain("top-secret-token");
     expect(JSON.stringify(result)).not.toContain('"message":"secret"');
   });

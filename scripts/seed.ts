@@ -1,7 +1,7 @@
 /* Seeds Firestore with the generated Wardha district.
    Run: npm run seed -- --demo-date 2026-07-04  (defaults to today) */
 import { generateDistrict } from "../lib/data/generate";
-import { adminDb } from "../lib/firebase/admin";
+import { adminDb } from "../lib/firebase/admin-core";
 
 const argIdx = process.argv.indexOf("--demo-date");
 const demoDate = argIdx > -1 ? process.argv[argIdx + 1] : new Date().toISOString().slice(0, 10);

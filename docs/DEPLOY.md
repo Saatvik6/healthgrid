@@ -14,7 +14,8 @@ Project: `healthgrid-22146` · Region: `asia-south1` (Mumbai, next to Firestore)
 The repo has a proven multi-stage `Dockerfile` (Next.js standalone, serves on
 `$PORT`/8080). Because a Dockerfile is present, Cloud Run uses it for both the
 console and CLI flows — the public `NEXT_PUBLIC_*` keys are baked in the build, so
-there is **no build-env-var footgun**. You only set the two server secrets at runtime.
+there is **no build-env-var footgun**. Set the Gemini secret at runtime;
+Firebase Admin uses the Cloud Run service account through Application Default Credentials (ADC).
 
 ## A1 — From the Google Cloud Console (no CLI install)
 
@@ -35,7 +36,7 @@ there is **no build-env-var footgun**. You only set the two server secrets at ru
    | `GEMINI_MODEL` | `gemini-3.5-flash` |
    | `GEMINI_FALLBACK_MODEL` | `gemini-3-flash-preview` |
    | `GEMINI_API_KEY` | *(from `.env.local`)* |
-   | `FIREBASE_SERVICE_ACCOUNT_B64` | *(from `.env.local`, the long base64 line)* |
+   | `FIREBASE_SERVICE_ACCOUNT_B64` | *(optional migration/local override)* |
 
    (For `GEMINI_API_KEY` / the service account you can instead click **Reference a
    secret** and store them in Secret Manager — cleaner, optional.)
@@ -52,11 +53,39 @@ gcloud auth login
 gcloud config set project healthgrid-22146
 gcloud run deploy healthgrid --source . --region asia-south1 --allow-unauthenticated `
   --set-env-vars "GEMINI_MODEL=gemini-3.5-flash,GEMINI_FALLBACK_MODEL=gemini-3-flash-preview" `
-  --set-env-vars "^@^GEMINI_API_KEY=<key>@FIREBASE_SERVICE_ACCOUNT_B64=<base64>"
+  --set-env-vars "GEMINI_API_KEY=<key>"
 ```
 
-(The `^@^` sets `@` as the delimiter so the base64 value's characters don't break
-parsing. With the Dockerfile present, `--source .` uses it — no build-env flags needed.)
+With the Dockerfile present, `--source .` uses it; no build-env flags are needed.
+
+## A3 — Grant the attached service account Firestore access
+
+Do this before removing any existing `FIREBASE_SERVICE_ACCOUNT_B64` value:
+
+```powershell
+gcloud config set project healthgrid-22146
+
+$serviceAccount = gcloud run services describe healthgrid `
+  --region asia-south1 `
+  --format="value(spec.template.spec.serviceAccountName)"
+
+if (-not $serviceAccount) {
+  $projectNumber = gcloud projects describe healthgrid-22146 `
+    --format="value(projectNumber)"
+  $serviceAccount = "$projectNumber-compute@developer.gserviceaccount.com"
+}
+
+$serviceAccount
+
+gcloud projects add-iam-policy-binding healthgrid-22146 `
+  --member="serviceAccount:$serviceAccount" `
+  --role="roles/datastore.user"
+```
+
+`roles/datastore.user` grants Firestore data read/write access without broad
+project administration. Do not use Owner or Editor. An empty configured service
+account means Cloud Run is using the project's default compute service account,
+which the fallback above resolves.
 
 ## Post-deploy (both Cloud Run flows)
 
@@ -65,11 +94,26 @@ parsing. With the Dockerfile present, `--source .` uses it — no build-env flag
    *Website restrictions* → add `https://*.run.app/*` → Save.
 2. Smoke-test the URL: map, click Seloo, approve a transfer, Copilot (EN + Hindi),
    `/field` voice update, flip the Flood Alert scenario.
+   Also call `GET /api/health/firebase`; it should return
+   `{ "ok": true, "projectId": "healthgrid-22146" }`.
 3. Reseed to demo-perfect state before recording/judging:
    ```powershell
    npm run seed -- --demo-date <day>
    npx tsx --env-file=.env.local scripts/seed-ai-state.ts
    ```
+
+After all read/write flows and the health endpoint pass, inspect logs and only
+then remove the legacy override:
+
+```powershell
+gcloud run services logs read healthgrid `
+  --region asia-south1 `
+  --limit 100
+
+gcloud run services update healthgrid `
+  --region asia-south1 `
+  --remove-env-vars FIREBASE_SERVICE_ACCOUNT_B64
+```
 
 ---
 
@@ -99,18 +143,19 @@ firebase login
 firebase use healthgrid-22146
 ```
 
-## 3. Store the two secrets in Secret Manager
+## 3. Store runtime secrets in Secret Manager
 
-The public Firebase/Maps keys are already in `apphosting.yaml`. Only these two are
-secret. Copy each value out of your local `.env.local`.
+The public Firebase/Maps keys are already in `apphosting.yaml`. The Gemini key is
+required. The Firebase Base64 value is only a temporary override during the ADC
+migration; keep it until the App Hosting service account has equivalent IAM.
 
 ```powershell
 # Gemini API key (short). When prompted, paste the GEMINI_API_KEY value.
 firebase apphosting:secrets:set GEMINI_API_KEY
 
-# Service-account JSON, base64 (long, 3184 chars). Easiest via a temp file:
-$env = Get-Content .env.local | Where-Object { $_ -like 'FIREBASE_SERVICE_ACCOUNT_B64=*' }
-($env -replace '^FIREBASE_SERVICE_ACCOUNT_B64=','') | Out-File -NoNewline -Encoding ascii $env:TEMP\sa.txt
+# Optional migration override; remove only after ADC is verified:
+$encodedCredential = Get-Content .env.local | Where-Object { $_ -like 'FIREBASE_SERVICE_ACCOUNT_B64=*' }
+($encodedCredential -replace '^FIREBASE_SERVICE_ACCOUNT_B64=','') | Out-File -NoNewline -Encoding ascii $env:TEMP\sa.txt
 firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_B64 --data-file $env:TEMP\sa.txt
 Remove-Item $env:TEMP\sa.txt
 ```
@@ -162,7 +207,7 @@ MUST pass the public keys as **build** env vars or the browser bundle ships blan
 ```powershell
 gcloud run deploy healthgrid --source . --region asia-south1 --allow-unauthenticated `
   --set-build-env-vars NEXT_PUBLIC_FIREBASE_API_KEY=...,NEXT_PUBLIC_FIREBASE_PROJECT_ID=healthgrid-22146,NEXT_PUBLIC_FIREBASE_APP_ID=...,NEXT_PUBLIC_MAPS_API_KEY=... `
-  --set-env-vars GEMINI_MODEL=gemini-3.5-flash,GEMINI_FALLBACK_MODEL=gemini-3-flash-preview,GEMINI_API_KEY=...,FIREBASE_SERVICE_ACCOUNT_B64=...
+  --set-env-vars GEMINI_MODEL=gemini-3.5-flash,GEMINI_FALLBACK_MODEL=gemini-3-flash-preview,GEMINI_API_KEY=...
 ```
 
 (Needs the gcloud CLI installed and `gcloud auth login`. App Hosting avoids the

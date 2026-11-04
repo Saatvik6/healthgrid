@@ -12,13 +12,13 @@ export async function POST(request: Request) {
   }
   const validation = validateNotifyRequest(payload);
   if (!validation.ok) return Response.json({ success: false, error: validation.error }, { status: validation.status });
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
-    return Response.json({ success: false, error: "Notification delivery requires Firebase server credentials" }, { status: 503 });
-  }
   let facility;
   try {
     facility = await getFacility(validation.value.facilityId);
-  } catch {
+  } catch (error) {
+    console.error("Notification facility lookup failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return Response.json({ success: false, error: "Facility data could not be loaded" }, { status: 500 });
   }
   if (!facility) return Response.json({ success: false, error: "facility not found" }, { status: 404 });
@@ -32,7 +32,10 @@ export async function POST(request: Request) {
       createdBy: "district-admin-demo",
     });
     return Response.json({ success: result.status !== "failed", ...result });
-  } catch {
+  } catch (error) {
+    console.error("Notification persistence failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return Response.json({ success: false, error: "Notification could not be persisted" }, { status: 500 });
   }
 }

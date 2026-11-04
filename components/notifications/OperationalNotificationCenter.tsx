@@ -118,13 +118,24 @@ export default function OperationalNotificationCenter({
         createdBy: "district-admin-demo",
         updatedAt: null,
       });
-      const partial = body.status === "partially_delivered" || body.status === "failed";
+      const partial =
+        body.status === "partially_delivered" ||
+        body.status === "failed";
+
+      const whatsappChannel = body.channels?.whatsapp;
+      const whatsappFailure = whatsappChannel?.state === "failed";
+
       setFeedback({
         kind: partial ? "partial" : "success",
         message: partial
-          ? channels.in_app
-            ? "In-app delivery was saved, but one selected channel needs attention."
-            : "The notification was saved, but the selected delivery channel failed."
+          ? whatsappFailure
+            ? `WhatsApp delivery failed: ${
+                whatsappChannel?.errorMessage ??
+                "Unknown WhatsApp delivery error"
+              }`
+            : channels.in_app
+              ? "In-app delivery was saved, but one selected channel needs attention."
+              : "The notification was saved, but the selected delivery channel failed."
           : "Notification sent successfully.",
       });
     } catch (error) {

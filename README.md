@@ -1,5 +1,7 @@
 # HealthGrid AI
 
+## 🏆 Winner of Google Cloud X Hack2Skill "Build with AI: Code for Communities"
+
 **An AI command center for district public healthcare.** HMIS systems record what happened; HealthGrid decides what to do next — and a health worker speaking Hindi into a phone changes the district map in front of the District Health Officer's eyes.
 
 Built for the Google **Build with AI — Code for Communities** hackathon · Smart Health track.
@@ -80,11 +82,24 @@ Operational data (daily stock, attendance, footfall) does not exist publicly for
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in keys (Gemini, Firebase web config, Maps, service account)
+cp .env.example .env.local   # fill in Gemini, Firebase web config, and Maps keys
 npm run check-keys           # verifies all three credentials
 npm run seed                 # seeds the Wardha district into Firestore
 npm run dev                  # http://localhost:3000 (DHO) · /field (worker)
 ```
+
+Firebase Admin supports two local credential modes. Either set
+`FIREBASE_SERVICE_ACCOUNT_B64` in `.env.local`, or leave it unset and configure
+Application Default Credentials:
+
+```bash
+gcloud auth application-default login
+gcloud config set project healthgrid-22146
+```
+
+Do not commit a service-account JSON file. In Cloud Run, leave the Base64
+override unset after migration verification; Admin uses the service account
+attached to the `healthgrid` service.
 
 | Script | Purpose |
 |---|---|
@@ -141,6 +156,6 @@ firebase deploy --only firestore:indexes
 4. Select **Acknowledge** after completing the action.
 5. Return to the selected facility in `/`; delivery, read, and acknowledgement update without a refresh.
 
-## Team
+## Team Noida Boys
 
-Built by **Nishant Rajpathak** & **Saatvik** with Claude Code.
+Built by **Nishant Rajpathak** & **Saatvik Das**.

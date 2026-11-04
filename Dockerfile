@@ -1,8 +1,9 @@
 # Cloud Run container for HealthGrid AI (Next.js standalone).
 # Public NEXT_PUBLIC_* keys are baked at build time — they are client-side
 # keys already shipped to every browser, so this is not a secret leak.
-# Server secrets (GEMINI_API_KEY, FIREBASE_SERVICE_ACCOUNT_B64) are injected
-# as Cloud Run runtime env vars, never baked here.
+# GEMINI_API_KEY is injected as a Cloud Run runtime secret. Firebase Admin uses
+# the attached Cloud Run service account through Application Default Credentials;
+# FIREBASE_SERVICE_ACCOUNT_B64 remains an optional migration/local override.
 
 FROM node:20-slim AS deps
 WORKDIR /app

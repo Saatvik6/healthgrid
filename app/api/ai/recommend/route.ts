@@ -5,8 +5,6 @@ import type { Facility } from "@/lib/engine/types";
 import { GeminiUnavailable, generateStructured } from "@/lib/gemini";
 import { getAllFacilities, getFacility } from "@/lib/server/data";
 
-const HAS_ADMIN = !!process.env.FIREBASE_SERVICE_ACCOUNT_B64;
-
 interface ProposedTransfer {
   medicineId: string;
   qty: number;
@@ -131,17 +129,13 @@ export async function POST(req: Request) {
 
     let persisted = false;
     const withIds = [];
-    if (HAS_ADMIN) {
-      const { adminDb } = await import("@/lib/firebase/admin");
-      const db = adminDb();
-      for (const rec of validated) {
-        const ref = await db.collection("recommendations").add(rec);
-        withIds.push({ ...rec, id: ref.id });
-      }
-      persisted = true;
-    } else {
-      withIds.push(...validated.map((rec, i) => ({ ...rec, id: `local-${target.id}-${i}` })));
+    const { adminDb } = await import("@/lib/firebase/admin");
+    const db = adminDb();
+    for (const rec of validated) {
+      const ref = await db.collection("recommendations").add(rec);
+      withIds.push({ ...rec, id: ref.id });
     }
+    persisted = true;
 
     const response = { transfers: withIds, persisted };
     cache.set(facilityId, { at: target.lastUpdated, response });
