@@ -5,12 +5,14 @@ import type { Facility } from "@/lib/engine/types";
 import type { FieldUpdate } from "@/app/api/actions/update-facility/route";
 import type { FieldStrings, Lang } from "@/lib/field-i18n";
 import { LANG_NAME } from "@/lib/field-i18n";
+import { startWavRecording, type WavRecorder } from "@/lib/wav-recorder";
 
 interface VoiceResult {
   updates: FieldUpdate[];
   confidence: number;
   transcript: string;
   echo: string;
+  echoLang?: string;
 }
 
 type Phase = "idle" | "recording" | "processing" | "confirm" | "saving" | "done" | "retry" | "error";
@@ -29,39 +31,52 @@ export default function VoiceUpdate({ facility, lang, t }: { facility: Facility;
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<VoiceResult | null>(null);
   const [error, setError] = useState("");
-  const recorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
+  const recorder = useRef<WavRecorder | null>(null);
+  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const player = useRef<HTMLAudioElement | null>(null);
 
   async function startRecording() {
+    if (recorder.current) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      chunks.current = [];
-      const rec = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      rec.ondataavailable = (e) => chunks.current.push(e.data);
-      rec.onstop = () => {
-        stream.getTracks().forEach((tr) => tr.stop());
-        void processAudio();
-      };
-      rec.start();
-      recorder.current = rec;
+      recorder.current = await startWavRecording();
       setPhase("recording");
-      // Hard stop at 30s so a stuck pointerup can't record forever.
-      setTimeout(() => rec.state === "recording" && rec.stop(), 30_000);
+      // Hard stop at 30s (Gnani Prisma's per-request limit) so a stuck pointerup can't record forever.
+      stopTimer.current = setTimeout(stopRecording, 29_500);
     } catch {
       setError(t.micDenied);
       setPhase("error");
     }
   }
 
-  function stopRecording() {
-    if (recorder.current?.state === "recording") {
-      setPhase("processing");
-      recorder.current.stop();
+  async function stopRecording() {
+    const rec = recorder.current;
+    if (!rec) return;
+    recorder.current = null;
+    if (stopTimer.current) clearTimeout(stopTimer.current);
+    setPhase("processing");
+    void processAudio(await rec.stop());
+  }
+
+  /** Reads the confirmation aloud with Gnani Timbre. Best effort: the screen still shows it. */
+  async function speak(text: string, language?: string) {
+    try {
+      const res = await fetch("/api/ai/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, language }),
+      });
+      if (!res.ok) return;
+      const url = URL.createObjectURL(await res.blob());
+      player.current?.pause();
+      player.current = new Audio(url);
+      player.current.onended = () => URL.revokeObjectURL(url);
+      await player.current.play();
+    } catch {
+      /* audio is a convenience, not a requirement */
     }
   }
 
-  async function processAudio() {
-    const blob = new Blob(chunks.current, { type: "audio/webm" });
+  async function processAudio(blob: Blob) {
     // Browser-safe base64 (Buffer doesn't exist in client bundles).
     const bytes = new Uint8Array(await blob.arrayBuffer());
     let bin = "";
@@ -73,12 +88,14 @@ export default function VoiceUpdate({ facility, lang, t }: { facility: Facility;
       const res = await fetch("/api/ai/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioBase64, mimeType: "audio/webm", facilityId: facility.id, lang: LANG_NAME[lang] }),
+        body: JSON.stringify({ audioBase64, mimeType: "audio/wav", facilityId: facility.id, lang: LANG_NAME[lang], langCode: lang }),
       });
       if (!res.ok) throw new Error();
       const data: VoiceResult = await res.json();
       setResult(data);
-      setPhase(data.updates.length === 0 || data.confidence < 0.7 ? "retry" : "confirm");
+      const ok = data.updates.length > 0 && data.confidence >= 0.7;
+      setPhase(ok ? "confirm" : "retry");
+      if (ok && data.echo) void speak(data.echo, data.echoLang);
     } catch {
       setError(t.audioFailed);
       setPhase("error");
@@ -113,7 +130,7 @@ export default function VoiceUpdate({ facility, lang, t }: { facility: Facility;
     <section className="rounded-md border border-line bg-surface-1 overflow-hidden">
       <div className="px-4 pt-3 pb-1 flex items-baseline justify-between">
         <div className="rail-label">{t.voiceTitle}</div>
-        <div className="text-ink-3 text-[10px]">Gemini</div>
+        <div className="text-ink-3 text-[10px]">Gnani Prisma · Timbre</div>
       </div>
 
       {(phase === "idle" || phase === "recording") && (
@@ -174,7 +191,15 @@ export default function VoiceUpdate({ facility, lang, t }: { facility: Facility;
                     );
                   })}
                 </div>
-                {result.echo && <p className="text-ink-3 text-xs mt-2 leading-relaxed">{result.echo}</p>}
+                {result.echo && (
+                  <button
+                    onClick={() => speak(result.echo, result.echoLang)}
+                    className="text-ink-3 text-xs mt-2 leading-relaxed text-left hover:text-ink-2"
+                    aria-label="Play confirmation"
+                  >
+                    🔊 {result.echo}
+                  </button>
+                )}
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={confirm}
