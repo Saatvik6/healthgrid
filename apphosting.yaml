@@ -52,6 +52,10 @@ env:
     secret: FIREBASE_SERVICE_ACCOUNT_B64
     availability:
       - RUNTIME
+  - variable: GNANI_API_KEY
+    secret: GNANI_API_KEY
+    availability:
+      - RUNTIME
   - variable: WHATSAPP_TOKEN
     secret: WHATSAPP_TOKEN
     availability:

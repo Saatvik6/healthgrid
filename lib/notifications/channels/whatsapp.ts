@@ -9,7 +9,7 @@ interface WhatsAppConfig {
 
 interface ProviderResponse {
   messages?: Array<{ id?: string }>;
-  error?: { code?: string | number };
+  error?: { code?: string | number; message?: string };
 }
 
 function failed(errorCode: string, errorMessage: string): ChannelDeliveryResult {
